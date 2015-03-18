@@ -2,7 +2,9 @@ package ARR233;
 
 
 
+import java.nio.ByteBuffer;
 import java.util.Date;
+
 import javax.servlet.http.Cookie;
 
 /**
@@ -11,6 +13,10 @@ import javax.servlet.http.Cookie;
  *Assumed to be unique by: Session, Version
  */
 public class SimpleEntry implements Comparable<SimpleEntry>{
+	public static final byte EXP_OFFSET = SessionFetcher.MESSAGE_OFFSET;
+	public static final byte VN_OFFSET = SessionFetcher.MESSAGE_OFFSET + 8;
+	public static final byte MSG_OFFSET = SessionFetcher.MESSAGE_OFFSET + 12;
+	public static final byte MAX_MSG_SIZE_UTF_8  = (64 - MSG_OFFSET) / 8;
 	/**
 	 * 
 	 */
@@ -43,7 +49,7 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 	public SimpleEntry(long sessionID){
 		this.sid = sessionID;
 		this.vn = 0;
-		this.msg = "<p>Hello World</p>\n<img src=\"http://www.fws.gov/northeast/ecologicalservices/turtle/images/EBTU_boxturtle_Fusco300.jpg\" />";
+		this.msg = "Hello World";
 		this.exp = newExp(null);
 	}
 	/**
@@ -125,10 +131,13 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 	 * @return
 	 */
 	private String sanitizeSessionMessage(String sessionMessage) {
-		return org.owasp.html.Sanitizers.BLOCKS.and(
-				org.owasp.html.Sanitizers.FORMATTING).and(
-				org.owasp.html.Sanitizers.IMAGES
+		String message =  org.owasp.html.Sanitizers.BLOCKS.and(
+				org.owasp.html.Sanitizers.FORMATTING
 		).sanitize(sessionMessage);
+		if (message.length() > MAX_MSG_SIZE_UTF_8){
+			message = message.substring(0, MAX_MSG_SIZE_UTF_8 + 1);
+		}
+		return message;
 	}
     /**
      * Human readable session state, to discriminate between active sessions, sessions that were terminated, 
@@ -195,6 +204,12 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 		}
 		cookie.setMaxAge(expiry);
 		return cookie;
+	}
+	
+	public byte[] fillBufferForUDP(ByteBuffer buffer){
+		buffer.putLong(SessionFetcher.MESSAGE_OFFSET, exp.getTime());
+		buffer.putInt(SessionFetcher.MESSAGE_OFFSET + 8, vn);
+		buffer.putInt(SessionFetcher.MESSAGE_OFFSET + 12, message)
 	}
 	
 	

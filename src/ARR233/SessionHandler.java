@@ -5,6 +5,8 @@ package ARR233;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletException;
@@ -34,7 +36,11 @@ public class SessionHandler extends HttpServlet {
 	/**
 	 * Session ID Generator TODO: make this not simple to guess
 	 */
-	private static final AtomicLong SESSION_ID_GEN = new AtomicLong(serialVersionUID);
+	private static final AtomicInteger SESSION_ID_GEN = new AtomicInteger(0);
+	/**
+	 * Session call ID Generator
+	 */
+	private static final AtomicInteger SESSION_CALL_GEN = new AtomicInteger(0);
 	/**
 	 * See Debugging Printouts
 	 */
@@ -171,10 +177,12 @@ public class SessionHandler extends HttpServlet {
 	/**
 	 * @return
 	 */
-	private long generateSessionID() {
+	private static int generateSessionID() {
 		return SESSION_ID_GEN.getAndIncrement();
 	}
-
+	public static int generateCallID() {
+		return SESSION_CALL_GEN.getAndIncrement();
+	}
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)

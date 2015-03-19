@@ -12,10 +12,12 @@ import javax.servlet.http.Cookie;
  *Immutable simple entry class
  *Assumed to be unique by: Session, Version
  */
-public class SimpleEntry implements Comparable<SimpleEntry>{
+public final class SimpleEntry implements Comparable<SimpleEntry>{
 	public static final byte EXP_OFFSET = SessionFetcher.MESSAGE_OFFSET;
-	public static final byte VN_OFFSET = SessionFetcher.MESSAGE_OFFSET + 8;
-	public static final byte MSG_OFFSET = SessionFetcher.MESSAGE_OFFSET + 12;
+	public static final byte VN_OFFSET = EXP_OFFSET + 8;
+	public static final byte MSG_LENGTH_OFFSET = VN_OFFSET + 4; 
+	public static final byte MSG_OFFSET = MSG_LENGTH_OFFSET+ 1;
+	
 	public static final byte MAX_MSG_SIZE_UTF_8  = (64 - MSG_OFFSET) / 8;
 	/**
 	 * 
@@ -33,15 +35,13 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 	 * Version number 
 	 */
 	public final int vn;
-	/**
-	 * placeholder for metadata, not sure if this will be handled implicitly by version number or need to be stored.
-	 */
-	private final Byte metadata = null;
+
+
 	//set session timeout for 6 hours from now every time a cookie is created
 	/**
 	 * Expiration date
 	 */
-	private final Date exp;
+	public final long exp;
 	/**
 	 * Method to create a new session
 	 * @param sessionID the session ID assumed to be unique to servlet
@@ -50,7 +50,7 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 		this.sid = sessionID;
 		this.vn = 0;
 		this.msg = "Hello World";
-		this.exp = newExp(null);
+		this.exp = new Date().getTime();
 	}
 	/**
 	 * Update a session with a new message (and extend the expiration time). Will not work if the session
@@ -61,12 +61,21 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 	public SimpleEntry(SimpleEntry session, String message){
 		sid = session.sid;
 		vn = newVersionNumber(session, true);
-		exp = newExp(session);
+		exp = session.exp;
 		if (!session.isExpired() && ! session.isRetired()){
 			msg = sanitizeSessionMessage(message);
 		} else {
 			msg = session.msg;
 		}
+	}
+	public SimpleEntry(long sid, ByteBuffer recvPkt){
+		this.sid = sid;
+		this.vn = recvPkt.getInt(VN_OFFSET);
+		this.exp = recvPkt.getLong(EXP_OFFSET);
+		int message_length = recvPkt.get(MSG_LENGTH_OFFSET) * 8;
+		byte[] msgAsByteArray = new byte[message_length];
+		recvPkt.get(msgAsByteArray, MSG_OFFSET, MSG_OFFSET + message_length).array();
+		this.msg = new String(msgAsByteArray);
 	}
 	/**
 	 * Constructor for renewing or retiring a session
@@ -78,7 +87,7 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 		sid = session.sid;
 		vn = newVersionNumber(session, keepAlive);
 		msg = session.msg;
-		exp = newExp(session);
+		exp = session.exp;
 	}
     /**
      * Update a version number
@@ -93,24 +102,8 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 		else 
 			return -1;
     }
-    /**
-     * create an updated sxpiration date, if the session passed in is not null, retired, or expired
-     * @param prevSession
-     * @return date to expire at
-     */
-    private Date newExp(SimpleEntry prevSession){
-    	if (prevSession == null || !(prevSession.isExpired() || prevSession.isRetired()))
-    		return new Date(new Date().getTime() + 6 * 60 * 60 * 1000 );
-    	else 
-    		return prevSession.getExp();
-    }
-	/**
-	 * Get date this session expires at
-	 * @return date this session expires at
-	 */
-	public Date getExp() {
-		return new Date(exp.getTime());
-	}
+
+
     /**
      * Determine if this session has been explicitly logged out of
      * @return this session has been explicitly logged out
@@ -123,7 +116,7 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
      * @return session has expired
      */
     public boolean isExpired(){
-    	return new Date().after(exp);
+    	return new Date().getTime() > exp;
     }
 	/**
 	 * A method to clean the session message
@@ -159,14 +152,14 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
      * @see java.lang.Object#toString()
      */
     public String toString(){
-    	return "SID: " + sid + ", VN: " + vn + ", EXP: " + exp.toString() + ", MSG: " + msg; 
+    	return "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp)+ ", MSG: " + msg; 
     }
     /**
      * A HTML formatted version of toString for debugging
      * @return A HTML formatted version of toString for debugging
      */
     public String htmlFormattedDebugMessage(){
-    	return "<p>" + "SID: " + sid + ", VN: " + vn + ", EXP: " + exp.toString() + " MSG(Below):</p>" + msg;
+    	return "<p>" + "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp) + " MSG(Below):</p>" + msg;
     }
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
@@ -197,7 +190,7 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 	public Cookie getAsCookie(){
 		String value = "{\"SID\":\""+Long.toString(sid,36)+"\", \"VN\":\""+Integer.toString(vn, 36)+"\", \"MetaData\":\"null\"}";
 		Cookie cookie = new Cookie(COOKIE_NAME, value);
-		int expiry = (int) ((exp.getTime() - new Date().getTime() + 999)/1000);
+		int expiry = (int) ((exp - new Date().getTime() + 999)/1000);
 		if (isRetired() || expiry < 0){
 			expiry = 0;
 			cookie.setValue(sessionStateHR());
@@ -206,10 +199,18 @@ public class SimpleEntry implements Comparable<SimpleEntry>{
 		return cookie;
 	}
 	
-	public byte[] fillBufferForUDP(ByteBuffer buffer){
-		buffer.putLong(SessionFetcher.MESSAGE_OFFSET, exp.getTime());
-		buffer.putInt(SessionFetcher.MESSAGE_OFFSET + 8, vn);
-		buffer.putInt(SessionFetcher.MESSAGE_OFFSET + 12, message)
+
+	
+	public void fillBufferForUDP(ByteBuffer buffer){
+		buffer.putLong(EXP_OFFSET, exp);
+		buffer.putInt(VN_OFFSET, vn);
+		byte[] msgAsByteArray = msg.getBytes();
+		byte msg_length  = (byte) (msgAsByteArray.length/8);
+		buffer.put(MSG_LENGTH_OFFSET, msg_length);
+		for (int i = 0; i < msgAsByteArray.length && i < 64; i++)
+		{
+			buffer.put(MSG_OFFSET + i, msgAsByteArray[i]);
+		}
 	}
 	
 	

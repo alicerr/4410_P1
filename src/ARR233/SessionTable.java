@@ -28,16 +28,7 @@ public class SessionTable implements Runnable {
      * @return the session if found, otherwise null
      */
     public SimpleEntry get(long id){
-
-    	if (!table.containsKey(id)){
-    		return null;
-    	} else {
-    		try {
-    			return table.get(id);
-    		} catch (Exception e) {
-    			return null;
-    		}
-    	}
+    	return table.get(id);
     }
     /**
      * Store or update a session
@@ -45,17 +36,23 @@ public class SessionTable implements Runnable {
      * @return
      */
     public boolean put(SimpleEntry session){
-    	if (session != null) {
-    		try {
-    			table.put(session.sid, session);
-    			return true;
-    		} catch (Exception e) {
-    			return false;
-    		} finally {
+    	SimpleEntry oldEntry = table.putIfAbsent(session.sid, session);
+    	boolean success = oldEntry == null;
+    	if (!success){
+    		boolean outdated = false;
+    		while (!outdated && !success){
+    			outdated = oldEntry.exp >= session.exp;
+    			if (!outdated){
+    				success = table.replace(session.sid, oldEntry, session);
+    				if (!success){
+    					oldEntry = table.get(session.sid);
+    				}
+    			}
     		}
-    	} else {
-    		return false;
+    		
+    			
     	}
+    	return success;
     }
     /**
      * A runnable service to be called by a listener removing entries that are more than two days past expiration
@@ -66,11 +63,11 @@ public class SessionTable implements Runnable {
     public long removeOldEntries(){
     	long removed = 0;
     	Enumeration<SimpleEntry> sessions = table.elements();
-    	Date removeIfBefore = new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000);
+    	long removeIfBefore = new Date().getTime();
        	while (sessions.hasMoreElements()){
        		try{
        			SimpleEntry session = sessions.nextElement();
-       			if (session.getExp().before(removeIfBefore)){
+       			if (session.exp < removeIfBefore ){
        				table.remove(session.sid);
        				removed++;
        			}

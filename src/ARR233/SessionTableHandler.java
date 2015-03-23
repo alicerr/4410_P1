@@ -22,8 +22,8 @@ public class SessionTableHandler implements ServletContextListener {
 	     * the thread pool that may be needed when I schedule more tasks & make this into a real server
 	     */
 	    private ScheduledThreadPoolExecutor executor = null;
-
-		
+	    private SessionServerThread listener = null;
+		private final boolean[] keepListenerAlive = {true};
 		/* (non-Javadoc)
 		 * @see javax.servlet.ServletContextListener#contextInitialized(javax.servlet.ServletContextEvent)
 		 */
@@ -31,10 +31,15 @@ public class SessionTableHandler implements ServletContextListener {
 		public void contextInitialized(ServletContextEvent sce) {
 			executor = new ScheduledThreadPoolExecutor(3);
 			SessionTable sessions = new SessionTable();
+			System.out.println(sessions);
 			ViewManager vm = new ViewManager();
+			System.out.println(vm);
 			sce.getServletContext().setAttribute("sessions", sessions);
+
 			try {
-				new SessionServerThread(sessions, vm).start(); //TODO is one thread enough
+				listener = new SessionServerThread(sessions, vm, keepListenerAlive);
+				listener.start(); //TODO is one thread enough
+				
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -54,6 +59,9 @@ public class SessionTableHandler implements ServletContextListener {
 		@Override
 		public void contextDestroyed(ServletContextEvent arg0) {
 			 executor.shutdown();
+			 keepListenerAlive[0] = false;
+			 	
+			 
 		}
 	
 }

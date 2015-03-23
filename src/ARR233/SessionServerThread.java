@@ -39,21 +39,23 @@ public class SessionServerThread extends Thread {
  
     protected DatagramSocket socket = null;
     private final SessionTable sessions;
-    protected boolean notException = true;
+    private final boolean[] keepGoing;
     private final ViewManager vm;
 
  
-    public SessionServerThread(SessionTable sessions, ViewManager vm) throws IOException {
+    public SessionServerThread(SessionTable sessions, ViewManager vm, boolean[] keepGoing) throws IOException {
         super("SessionServerThread");
         this.sessions = sessions;
         socket = new DatagramSocket(5300);
         this.vm = vm;
+        System.out.println("session server thread initialized");
+        this.keepGoing = keepGoing;
 
     }
  
     public void run() {
     	
-        while (true) {
+        while (keepGoing[0] == true) {
             try {
                 byte[] buf = new byte[512];
                 
@@ -101,8 +103,9 @@ public class SessionServerThread extends Thread {
                 
             }
         
-        socket.close();
+        
         }
+        socket.close();
     
     }
  

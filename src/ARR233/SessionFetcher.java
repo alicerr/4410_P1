@@ -99,8 +99,9 @@ public abstract class SessionFetcher {
 				while (tryThisRound.size() < numServersToTryPerRound  && servers.hasMoreElements()){
 					
 					SimpleServer nextServer = servers.nextElement();
-					if (nextServer.status == SimpleServer.status_state.UP && !contains(destAddrs, nextServer.serverID))
-						tryThisRound.add(nextServer.serverID);
+					InetAddress nextInetAddress = nextServer.serverAddress();
+					if (nextServer.status == SimpleServer.status_state.UP && !contains(destAddrs, nextInetAddress))
+						tryThisRound.add(nextInetAddress);
 				}
 				for( InetAddress destAddr : tryThisRound ) {
 					    DatagramPacket sendPkt = new DatagramPacket(requestMessage, requestMessage.length, destAddr, portProj1bRPC);

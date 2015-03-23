@@ -4,6 +4,7 @@ package ARR233;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,6 +28,7 @@ import com.google.gson.JsonParser;
  */
 @WebServlet("/SessionHandler")
 public class SessionHandler extends HttpServlet {
+	private static final int localServerId = 0;
 	/**
 	 * Serial Version UID
 	 */
@@ -193,8 +195,12 @@ public class SessionHandler extends HttpServlet {
 	/**
 	 * @return
 	 */
-	private static int generateSessionID() {
-		return SESSION_ID_GEN.getAndIncrement();
+	private static long generateSessionID() {
+		int inServerId = SESSION_ID_GEN.getAndIncrement();
+		ByteBuffer hold = ByteBuffer.allocate(8);
+		hold.putInt(localServerId);
+		hold.putInt(4, inServerId);
+		return hold.getLong();
 	}
 	public static int generateCallID() {
 		return SESSION_CALL_GEN.getAndIncrement();

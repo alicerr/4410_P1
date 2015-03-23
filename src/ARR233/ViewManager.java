@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ViewManager {
 
-	private ConcurrentHashMap<InetAddress, SimpleServer> servers = new ConcurrentHashMap<InetAddress, SimpleServer>();
+	private ConcurrentHashMap<Integer, SimpleServer> servers = new ConcurrentHashMap<Integer, SimpleServer>();
 	int size = 0;
 
 	public boolean addServer(SimpleServer newServer){

@@ -20,6 +20,7 @@ public abstract class SessionFetcher {
 	public static final byte SESSION_NOT_FOUND = -2;
 	public static final byte NEWER_VERSION_IN_TABLE = -3;
 	public static final float FACTOR_TO_CHECK = 1.5f;
+	public static final short DATAGRAM_TIMEOUT = 5000;
 
 	public static SimpleEntry fetchSession(int callID, long sessionID, InetAddress[] destAddrs){
 			ByteBuffer request = ByteBuffer.allocate(13);
@@ -31,6 +32,7 @@ public abstract class SessionFetcher {
 			SimpleEntry sessionFetched = null;
 			try {
 				rpcSocket = new DatagramSocket();
+				rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
 				
 				for( InetAddress destAddr : destAddrs ) {
 					    DatagramPacket sendPkt = new DatagramPacket(requestMessage, requestMessage.length, destAddr, portProj1bRPC);
@@ -93,6 +95,7 @@ public abstract class SessionFetcher {
 		
 		try {
 			rpcSocket = new DatagramSocket();
+			rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
 			do{
 				
 				numServersToTryPerRound =  (int) ((k - stored.size() -1 )* FACTOR_TO_CHECK + .999);

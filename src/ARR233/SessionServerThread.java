@@ -50,7 +50,6 @@ public class SessionServerThread extends Thread {
         this.vm = vm;
         System.out.println("session server thread initialized");
         this.keepGoing = keepGoing;
-
     }
  
     public void run() {

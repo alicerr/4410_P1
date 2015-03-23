@@ -47,10 +47,10 @@ public class SessionServerThread extends Thread {
         super("SessionServerThread");
         this.sessions = sessions;
         socket = new DatagramSocket(5300);
+        socket.setSoTimeout(SessionFetcher.DATAGRAM_TIMEOUT);
         this.vm = vm;
         System.out.println("session server thread initialized");
         this.keepGoing = keepGoing;
-
     }
  
     public void run() {

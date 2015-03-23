@@ -10,7 +10,7 @@ public class ViewManager {
 	int size = 0;
 
 	public boolean addServer(SimpleServer newServer){
-		
+		//TOD avoid adding local address
 		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
 		boolean success = oldServer == null;
 		if (success){

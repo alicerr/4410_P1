@@ -1,6 +1,7 @@
 package ARR233;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -13,6 +14,7 @@ public class SimpleServer implements Comparable<SimpleServer>{
 		time_observed = new Date().getTime();
 		this.serverID = serverID;
 		status = status_state.UP;
+		//                int serverID = ByteBuffer.wrap(packet.getAddress().getAddress()).getInt();
 	}
 
 	public SimpleServer(InetAddress serverID, long time_observed, status_state status){

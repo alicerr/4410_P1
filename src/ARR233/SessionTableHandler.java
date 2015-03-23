@@ -2,6 +2,7 @@ package ARR233;
 
 
 
+import java.io.IOException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +31,14 @@ public class SessionTableHandler implements ServletContextListener {
 		public void contextInitialized(ServletContextEvent sce) {
 			executor = new ScheduledThreadPoolExecutor(3);
 			SessionTable sessions = new SessionTable();
+			ViewManager vm = new ViewManager();
 			sce.getServletContext().setAttribute("sessions", sessions);
+			try {
+				new SessionServerThread(sessions, vm).start(); //TODO is one thread enough
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			//Check for sessions expired by 2 days once a day
 			try {
 	           executor.scheduleAtFixedRate(sessions, 

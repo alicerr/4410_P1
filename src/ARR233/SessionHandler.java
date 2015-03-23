@@ -173,6 +173,24 @@ public class SessionHandler extends HttpServlet {
 		    }
 
 	/**
+	 * 
+	 */
+	public SimpleEntry doGetDatagram(long sessionID){         
+	        	//Retrieve session table
+	   SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
+	   return sessions.get(sessionID);	        
+	}
+	/**
+	 * 
+	 */
+	public boolean doPutDatagram(SimpleEntry session){ 
+            
+	        
+	        	//Retrieve session table
+	   SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
+	   return sessions.put(session);	        
+	}
+	/**
 	 * @return
 	 */
 	private static int generateSessionID() {

@@ -54,7 +54,7 @@ public abstract class SessionFetcher {
 
 				if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == RETURNING_PACKET))
 					try {
-						sessionFetched = new SimpleEntry(sessionID, ByteBuffer.wrap(recvPkt.getData()));
+						sessionFetched = new SimpleEntry(ByteBuffer.wrap(recvPkt.getData()));
 					} catch (Exception e){
 						//TODO
 					}			

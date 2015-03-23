@@ -13,12 +13,13 @@ import javax.servlet.http.Cookie;
  *Assumed to be unique by: Session, Version
  */
 public final class SimpleEntry implements Comparable<SimpleEntry>{
-	public static final byte EXP_OFFSET = SessionFetcher.MESSAGE_OFFSET;
+	public static final byte SESSION_OFFSET = SessionFetcher.MESSAGE_OFFSET;
+	public static final byte EXP_OFFSET = SESSION_OFFSET + 8;
 	public static final byte VN_OFFSET = EXP_OFFSET + 8;
 	public static final byte MSG_LENGTH_OFFSET = VN_OFFSET + 4; 
 	public static final byte MSG_OFFSET = MSG_LENGTH_OFFSET+ 1;
 	
-	public static final byte MAX_MSG_SIZE_UTF_8  = (64 - MSG_OFFSET) / 8;
+	public static final byte MAX_MSG_SIZE_ASCII  = (64 - MSG_OFFSET) / 1;
 	/**
 	 * 
 	 */
@@ -68,14 +69,18 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 			msg = session.msg;
 		}
 	}
-	public SimpleEntry(long sid, ByteBuffer recvPkt){
-		this.sid = sid;
+	public SimpleEntry(ByteBuffer recvPkt){
+		this.sid = recvPkt.getLong(SESSION_OFFSET);
 		this.vn = recvPkt.getInt(VN_OFFSET);
 		this.exp = recvPkt.getLong(EXP_OFFSET);
-		int message_length = recvPkt.get(MSG_LENGTH_OFFSET) * 8;
+		int message_length = recvPkt.get(MSG_LENGTH_OFFSET);
 		byte[] msgAsByteArray = new byte[message_length];
 		recvPkt.get(msgAsByteArray, MSG_OFFSET, MSG_OFFSET + message_length).array();
-		this.msg = new String(msgAsByteArray);
+		String msg = "";
+		for (byte b : msgAsByteArray){
+			msg += (char)b;
+		}
+		this.msg = msg;
 	}
 	/**
 	 * Constructor for renewing or retiring a session
@@ -124,12 +129,17 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * @return
 	 */
 	private String sanitizeSessionMessage(String sessionMessage) {
-		String message =  org.owasp.html.Sanitizers.BLOCKS.and(
-				org.owasp.html.Sanitizers.FORMATTING
-		).sanitize(sessionMessage);
-		if (message.length() > MAX_MSG_SIZE_UTF_8){
-			message = message.substring(0, MAX_MSG_SIZE_UTF_8 + 1);
+		String message = "";
+		for (int i = 0; i < sessionMessage.length(); i++){
+			message += (char)(byte)sessionMessage.charAt(i);
 		}
+		message =  org.owasp.html.Sanitizers.BLOCKS.and(
+				org.owasp.html.Sanitizers.FORMATTING
+		).sanitize(message);
+		if (message.length() > MAX_MSG_SIZE_ASCII){
+			message = message.substring(0, MAX_MSG_SIZE_ASCII + 1);
+		}
+
 		return message;
 	}
     /**
@@ -202,6 +212,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 
 	
 	public void fillBufferForUDP(ByteBuffer buffer){
+		buffer.putLong(SESSION_OFFSET, sid);
 		buffer.putLong(EXP_OFFSET, exp);
 		buffer.putInt(VN_OFFSET, vn);
 		byte[] msgAsByteArray = msg.getBytes();

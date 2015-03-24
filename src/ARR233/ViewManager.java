@@ -27,6 +27,15 @@ public class ViewManager  implements Runnable {
 	 */
 	public ViewManager(int loc){
 		localAddress = loc;
+		// The first server in a new servers view manager should be itself.
+		this.addServer(new SimpleServer(loc));
+	}
+	
+	/**
+	 * This should only ever be used by the simpleDB when creating it's own view.
+	 */
+	public ViewManager() {
+		localAddress = 0;
 	}
 	/**
 	 * Add a new server. will ad if not locol, or outdated
@@ -34,10 +43,12 @@ public class ViewManager  implements Runnable {
 	 * @return
 	 */
 	public boolean addServer(SimpleServer newServer){
-		//TOD avoid adding local address
-		if (newServer.serverID == localAddress){
+		//TODO avoid adding local address
+		// I commented this out because the a server should have it's own info in
+		// the viewManager. 
+		/*if (newServer.serverID == localAddress){
 			return false;
-		}
+		}*/
 		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
 		boolean success = oldServer == null;
 		if (success){
@@ -83,6 +94,22 @@ public class ViewManager  implements Runnable {
 		}
 		return addedOrUpdated;
 	}
+	
+	/**
+	 * This should only be called when merging with the simpleDB
+	 * @param dbvm - vm from DB
+	 * @return
+	 */
+	public int merge(ViewManager dbvm) {
+		int addedOrUpdated = 0;
+		Enumeration<SimpleServer> serverEnum = dbvm.getServers();
+		while(serverEnum.hasMoreElements()) {
+			SimpleServer server = serverEnum.nextElement();
+			addedOrUpdated += addServer(server)? 1 : 0;
+		}
+		return addedOrUpdated;
+	}
+	
 	public SimpleServer.status_state getStatus(Integer integer) {
 		if (servers.containsKey(integer)){
 			return servers.get(integer).status;

@@ -3,6 +3,7 @@ package ARR233;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import com.amazonaws.auth.PropertiesCredentials;
@@ -11,8 +12,8 @@ import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.BatchPutAttributesRequest;
 import com.amazonaws.services.simpledb.model.CreateDomainRequest;
+import com.amazonaws.services.simpledb.model.DeleteDomainRequest;
 import com.amazonaws.services.simpledb.model.Item;
-import com.amazonaws.services.simpledb.model.ListDomainsResult;
 import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
 import com.amazonaws.services.simpledb.model.ReplaceableItem;
@@ -28,7 +29,7 @@ public class SimpleDBHandler {
 	public boolean connectToAccount(String credentialsFile){
 		boolean success = false;
 		try {
-			InputStream is = RPCClients.class.getResourceAsStream(credentialsFile);
+			InputStream is = SimpleDBHandler.class.getResourceAsStream(credentialsFile);
 			db = new AmazonSimpleDBClient(new PropertiesCredentials(is));
 		} catch (IOException e) {
 			success = false;
@@ -47,7 +48,7 @@ public class SimpleDBHandler {
 		return domains.contains(domain);
 	}
 
-	public List<SimpleServer> getAllViewData(String domain) {
+	private List<SimpleServer> getAllViewData(String domain) {
 		List<SimpleServer> serverList = new ArrayList<SimpleServer>();
 		String selectExpression = "select * from " + domain;
 		SelectRequest sr = new SelectRequest(selectExpression);
@@ -59,7 +60,16 @@ public class SimpleDBHandler {
 		return serverList;
 	}
 	
-	public void addViewToData(String domain, SimpleServer ss) {
+	public ViewManager getDBViews(String domain) {
+		List<SimpleServer> servers = this.getAllViewData(domain);
+		ViewManager vm = new ViewManager();
+		for(SimpleServer s : servers) {
+			vm.addServer(s);
+		}
+		return vm;
+	}
+	
+	public void addServerToDBViews(String domain, SimpleServer ss) {
 		List<ReplaceableAttribute> data = new ArrayList<ReplaceableAttribute>();
 		data.add(new ReplaceableAttribute().withName("ServerView").withValue(ss.toString()).withReplace(true));
 		//db.batchPutAttributes(new BatchPutAttributesRequest(domain, data));
@@ -69,5 +79,20 @@ public class SimpleDBHandler {
 
 	public void createDomain(String domain) {
 		db.createDomain(new CreateDomainRequest(domain));
+	}
+	
+	public void deleteDomain(String domain) {
+		db.deleteDomain(new DeleteDomainRequest(domain));
+	}
+
+	public void updateDBViews(String domain, ViewManager vm) {
+		List<ReplaceableItem> data = new ArrayList<ReplaceableItem>();
+		Enumeration<SimpleServer> serverEnum = vm.getServers();
+		while(serverEnum.hasMoreElements()) {
+			SimpleServer server = serverEnum.nextElement();
+			data.add(new ReplaceableItem().withName(Integer.toString(server.serverID)).withAttributes(
+					new ReplaceableAttribute().withName("ServerView").withValue(server.toString()).withReplace(true)));
+		}
+		db.batchPutAttributes(new BatchPutAttributesRequest(domain, data));
 	}
 }

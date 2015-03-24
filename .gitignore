@@ -4,3 +4,6 @@ build/
 .project
 .classpath
 .settings/
+
+#AWS keys
+AwsCredentials.properties

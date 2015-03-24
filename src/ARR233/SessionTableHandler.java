@@ -21,7 +21,7 @@ import javax.servlet.annotation.WebListener;
 public class SessionTableHandler implements ServletContextListener {
 	
 
-
+		private static final String DB_DOMAIN = "Project1bViews";
 	    /**
 	     * the thread pool to remove old sessions
 	     */
@@ -50,11 +50,18 @@ public class SessionTableHandler implements ServletContextListener {
 			System.out.println(sessions);
 			ViewManager vm = null; 
 			InetAddress IP;
+			SimpleDBHandler dbhandle;
 			try {
 				IP = InetAddress.getLocalHost();
 				vm = new ViewManager(SimpleServer.inetToInt(IP));
 				//TODO get amavon IP
-				//TODO consult & inform DB
+
+				// Connect to SimpleDB and get all Views. Merge them. 
+				dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+				ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
+				vm.merge(dbvm);
+				dbhandle.updateDBViews(DB_DOMAIN,vm);
+				
 				System.out.println("IP of my system is := "+IP.getHostAddress());
 				
 			} catch (UnknownHostException e2) {

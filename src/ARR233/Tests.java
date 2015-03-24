@@ -1,36 +1,23 @@
 package ARR233;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Locale;
-
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.PropertiesCredentials;
-import com.amazonaws.services.simpledb.AmazonSimpleDB;
-import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
-import com.amazonaws.services.simpledb.model.CreateDomainRequest;
-import com.amazonaws.services.simpledb.model.ListDomainsResult;
 
 public class Tests extends SessionFetcher{
 	static String domain = "Project1bViews";
 	
 	public static void main(String[] args) throws Exception {
 		
-		WhatIsInTheDB();
+		//WhatIsInTheDB();
 		//TestDeleteDomain();
 		//TestSimpleDBHandler();
 		//TestMergeDB();
+		//TestGossip(false);
+		TestGossip(true);
 		
 	}
 
@@ -117,6 +104,34 @@ public class Tests extends SessionFetcher{
 		while(serverEnum.hasMoreElements()) {
 			System.out.println((SimpleServer)serverEnum.nextElement());
 		}
+	}
+	
+	private static void TestGossip(boolean running) throws IOException {
+		System.out.println("Testing gossip with running server set to: " + running);
+		SessionTable st = new SessionTable();
+		//other vm
+		ViewManager myVM = new ViewManager(SimpleServer.inetToInt(InetAddress.getLocalHost()));
+		System.out.println("myVM");
+		printVM(myVM);
+		ViewManager otherRunningVM = new ViewManager(SimpleServer.inetToInt(InetAddress.getByName("google.com")));
+		otherRunningVM.addServer(new SimpleServer(InetAddress.getByName("cornell.edu")));
+		System.out.println("otherRunningVM");
+		printVM(otherRunningVM);
+		
+		boolean[] go = {true};
+		SessionServerThread thread = new SessionServerThread(st, otherRunningVM, go);
+		if(running)
+			thread.start();		
+		
+		SessionFetcher.sessionMerger(myVM);
+		
+		System.out.println("myVM");
+		printVM(myVM);
+		System.out.println("otherRunningVM");
+		printVM(otherRunningVM);
+		
+		if(running)
+			thread.kill();
 	}
 		
 }

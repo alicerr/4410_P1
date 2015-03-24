@@ -59,11 +59,16 @@ public class ViewManager  implements Runnable {
 			}
 		} else {
 			boolean outdated = false;
-			while (!outdated && !success){
+			// I think this is the logic we want
+			//while (!outdated && !success){
 				
-				outdated = oldServer.time_observed >= newServer.time_observed;
-				success = servers.replace(newServer.serverID, newServer, oldServer);
-				oldServer = success || outdated ? oldServer : servers.get(newServer.serverID);
+				outdated = oldServer.time_observed <= newServer.time_observed;
+				if(outdated) { // if oldServer is outdated AKA (oldTime <= newTime)
+					// We need to replace
+					success = servers.replace(oldServer.serverID, oldServer, newServer);
+				}
+				//success = servers.replace(newServer.serverID, oldServer, newServer);
+				//oldServer = success || outdated ? oldServer : servers.get(newServer.serverID);
 				if (success){
 					if (oldServer.status == SimpleServer.status_state.UP && newServer.status == SimpleServer.status_state.DOWN){
 						runningServers.decrementAndGet();
@@ -71,7 +76,7 @@ public class ViewManager  implements Runnable {
 						runningServers.incrementAndGet();
 					}
 				}
-			}
+			//}
 			
 				
 		}

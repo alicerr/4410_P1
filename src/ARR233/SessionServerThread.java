@@ -8,10 +8,10 @@ import java.net.*;
 import java.nio.ByteBuffer;
  
 public class SessionServerThread extends Thread {
- 
+	private Thread t;
     protected DatagramSocket socket = null;
     private final SessionTable sessions;
-    private final boolean[] keepGoing;
+    private volatile boolean[] keepGoing;
     private final ViewManager vm;
 
  
@@ -29,7 +29,6 @@ public class SessionServerThread extends Thread {
         while (keepGoing[0] == true) {
             try {
                 byte[] buf = new byte[512];
-                
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
@@ -92,6 +91,19 @@ public class SessionServerThread extends Thread {
         }
         socket.close();
     
+    }
+    
+    public void start() {
+        if (t == null)
+        {
+           t = new Thread (this);
+           t.start ();
+        }
+    }
+    
+    public void kill(){
+    	keepGoing[0] = false;
+    	System.out.println("Killed SessionServerThread");
     }
  
     

@@ -2,7 +2,6 @@ package ARR233;
 
 
 
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +27,8 @@ public class SessionTable implements Runnable {
      * @return the session if found, otherwise null
      */
     public SimpleEntry get(long id){
+    	System.out.println("table size:" + table.size());
+    	System.out.println("id: " + id);
     	return table.get(id);
     }
     /**
@@ -38,10 +39,13 @@ public class SessionTable implements Runnable {
     public boolean put(SimpleEntry session){
     	SimpleEntry oldEntry = table.putIfAbsent(session.sid, session);
     	boolean success = oldEntry == null;
+    	System.out.println(oldEntry);
+    	System.out.println(table.get(session.sid));
     	if (!success){
     		boolean outdated = false;
     		while (!outdated && !success){
-    			outdated = oldEntry.exp >= session.exp;
+    			//you can't un-retire (-1) a session
+    			outdated = (oldEntry.vn >= session.vn || oldEntry.vn != -1) && session.vn > -1;  
     			if (!outdated){
     				success = table.replace(session.sid, oldEntry, session);
     				if (!success){
@@ -63,7 +67,7 @@ public class SessionTable implements Runnable {
     public long removeOldEntries(){
     	long removed = 0;
     	Enumeration<SimpleEntry> sessions = table.elements();
-    	long removeIfBefore = new Date().getTime() + 3000;
+    	long removeIfBefore = System.currentTimeMillis() + 3000;
        	while (sessions.hasMoreElements()){
        		try{
        			SimpleEntry session = sessions.nextElement();

@@ -3,6 +3,8 @@ package ARR233;
 
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -12,42 +14,75 @@ import javax.servlet.annotation.WebListener;
 
 /**
  * Application Lifecycle Listener implementation class SessionTableHandler
+ * Sets up all needed vars
  *
  */
 @WebListener
 public class SessionTableHandler implements ServletContextListener {
+	
 
 
 	    /**
-	     * the thread pool that may be needed when I schedule more tasks & make this into a real server
+	     * the thread pool to remove old sessions
 	     */
 	    private ScheduledThreadPoolExecutor executor = null;
+	    /**
+	     * pool to merge old sessions
+	     */
+	    private ScheduledThreadPoolExecutor merger = null;
+	    
+	    /**
+	     *  thread to listen to the port for new request
+	     */
 	    private SessionServerThread listener = null;
+	    /**
+	     * Shutdown initiator for ^
+	     */
 		private final boolean[] keepListenerAlive = {true};
 		/* (non-Javadoc)
 		 * @see javax.servlet.ServletContextListener#contextInitialized(javax.servlet.ServletContextEvent)
 		 */
 		@Override
 		public void contextInitialized(ServletContextEvent sce) {
-			executor = new ScheduledThreadPoolExecutor(3);
+			executor = new ScheduledThreadPoolExecutor(1);
+			merger = new ScheduledThreadPoolExecutor(2);
 			SessionTable sessions = new SessionTable();
 			System.out.println(sessions);
-			ViewManager vm = new ViewManager();
-			System.out.println(vm);
-			sce.getServletContext().setAttribute("sessions", sessions);
-
+			ViewManager vm = null; 
+			InetAddress IP;
 			try {
-				listener = new SessionServerThread(sessions, vm, keepListenerAlive);
-				listener.start(); //TODO is one thread enough
+				IP = InetAddress.getLocalHost();
+				vm = new ViewManager(SimpleServer.inetToInt(IP));
+				//TODO get amavon IP
+				//TODO consult & inform DB
+				System.out.println("IP of my system is := "+IP.getHostAddress());
 				
-			} catch (IOException e1) {
+			} catch (UnknownHostException e2) {
 				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+			
+			
+			//get this from here later
+			sce.getServletContext().setAttribute("sessions", sessions);
+			sce.getServletContext().setAttribute("viewmanager", vm);
+			//start tasks
+			try {
+				System.out.println("starting listener");
+				listener = new SessionServerThread(sessions, vm, keepListenerAlive);
+				listener.start(); 
+				System.out.println("Set listener");
+			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			//Check for sessions expired by 2 days once a day
+			//Check for sessions expired  once a day
 			try {
+			   System.out.println("starting processes");
 	           executor.scheduleAtFixedRate(sessions, 
-	                    1, 1, TimeUnit.DAYS);
+	                    30, 30, TimeUnit.MINUTES);
+	           //merge handler
+	           merger.scheduleAtFixedRate(vm, 30, 30, TimeUnit.MINUTES);
+	           System.out.println("processes started");
 	        } catch(Exception e) {
 	           e.printStackTrace();
 	        }
@@ -59,9 +94,12 @@ public class SessionTableHandler implements ServletContextListener {
 		@Override
 		public void contextDestroyed(ServletContextEvent arg0) {
 			 executor.shutdown();
+			 merger.shutdown();
 			 keepListenerAlive[0] = false;
 			 	
 			 
 		}
+		
+		
 	
 }

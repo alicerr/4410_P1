@@ -3,10 +3,14 @@ package ARR233;
 
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.Cookie;
 
+import com.google.gson.Gson;
+import  com.google.common.base.Ascii;
 /**
  * @author Alice
  *Immutable simple entry class
@@ -16,10 +20,10 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	public static final byte SESSION_OFFSET = SessionFetcher.MESSAGE_OFFSET;
 	public static final byte EXP_OFFSET = SESSION_OFFSET + 8;
 	public static final byte VN_OFFSET = EXP_OFFSET + 8;
-	public static final byte MSG_LENGTH_OFFSET = VN_OFFSET + 4; 
-	public static final byte MSG_OFFSET = MSG_LENGTH_OFFSET+ 1;
-	
-	public static final byte MAX_MSG_SIZE_ASCII  = (64 - MSG_OFFSET) / 1;
+	public static final short MSG_LENGTH_OFFSET = VN_OFFSET + 4; 
+	public static final byte MSG_OFFSET = MSG_LENGTH_OFFSET+ 2;
+	public final static int TTL = 1000 * 60 * 60 * 6;
+	public static final short MAX_MSG_SIZE_ASCII  = (short)(512-MSG_OFFSET);
 	/**
 	 * 
 	 */
@@ -43,6 +47,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * Expiration date
 	 */
 	public final long exp;
+	
 	/**
 	 * Method to create a new session
 	 * @param sessionID the session ID assumed to be unique to servlet
@@ -51,7 +56,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		this.sid = sessionID;
 		this.vn = 0;
 		this.msg = "Hello World";
-		this.exp = new Date().getTime();
+		this.exp = System.currentTimeMillis() + TTL;
 	}
 	/**
 	 * Update a session with a new message (and extend the expiration time). Will not work if the session
@@ -62,25 +67,29 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	public SimpleEntry(SimpleEntry session, String message){
 		sid = session.sid;
 		vn = newVersionNumber(session, true);
-		exp = session.exp;
+		exp = !session.isExpired() && ! session.isRetired() ? System.currentTimeMillis() + TTL : session.exp;
 		if (!session.isExpired() && ! session.isRetired()){
 			msg = sanitizeSessionMessage(message);
 		} else {
 			msg = session.msg;
 		}
 	}
+	/**
+	 * TODO: not getting message properly ('hello world' message)
+	 * Conversion problems
+	 * @param recvPkt
+	 */
 	public SimpleEntry(ByteBuffer recvPkt){
 		this.sid = recvPkt.getLong(SESSION_OFFSET);
 		this.vn = recvPkt.getInt(VN_OFFSET);
 		this.exp = recvPkt.getLong(EXP_OFFSET);
-		int message_length = recvPkt.get(MSG_LENGTH_OFFSET);
-		byte[] msgAsByteArray = new byte[message_length];
-		recvPkt.get(msgAsByteArray, MSG_OFFSET, MSG_OFFSET + message_length).array();
-		String msg = "";
-		for (byte b : msgAsByteArray){
-			msg += (char)b;
+		short message_length = recvPkt.getShort(MSG_LENGTH_OFFSET);
+		String s = "";
+		for (int i = MSG_OFFSET; i < MSG_OFFSET + message_length ; i ++){
+			s += (char)(int)recvPkt.get(i);
 		}
-		this.msg = msg;
+		
+		this.msg = s;
 	}
 	/**
 	 * Constructor for renewing or retiring a session
@@ -88,11 +97,10 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * @param keepAlive if set to false this will retire the session, otherwise the session will renew
 	 */
 	public SimpleEntry(SimpleEntry session, boolean keepAlive){
-		
 		sid = session.sid;
 		vn = newVersionNumber(session, keepAlive);
 		msg = session.msg;
-		exp = session.exp;
+		exp = keepAlive ? System.currentTimeMillis() + TTL : session.exp;
 	}
     /**
      * Update a version number
@@ -131,13 +139,15 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	private String sanitizeSessionMessage(String sessionMessage) {
 		String message = "";
 		for (int i = 0; i < sessionMessage.length(); i++){
-			message += (char)(byte)sessionMessage.charAt(i);
+			if (inRange(sessionMessage.charAt(i))){
+				message += (char)(int)sessionMessage.charAt(i);
+			}
 		}
 		message =  org.owasp.html.Sanitizers.BLOCKS.and(
 				org.owasp.html.Sanitizers.FORMATTING
 		).sanitize(message);
 		if (message.length() > MAX_MSG_SIZE_ASCII){
-			message = message.substring(0, MAX_MSG_SIZE_ASCII + 1);
+			message = message.substring(0, MAX_MSG_SIZE_ASCII);
 		}
 
 		return message;
@@ -197,10 +207,20 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * Cookie Maker
 	 * @return JSON Cookie of this session, including Session ID in base 36, Version number in base 36 and MetaData in its value
 	 */
-	public Cookie getAsCookie(){
-		String value = "{\"SID\":\""+Long.toString(sid,36)+"\", \"VN\":\""+Integer.toString(vn, 36)+"\", \"MetaData\":\"null\"}";
-		Cookie cookie = new Cookie(COOKIE_NAME, value);
-		int expiry = (int) ((exp - new Date().getTime() + 999)/1000);
+	public Cookie getAsCookie(ArrayList<Integer> srvs){
+	
+		String s = "{ SRVS: "+ "[";
+		for (Integer srv: srvs){
+			s += srv + ", ";
+		}
+		s = s.substring(0,s.lastIndexOf(',')) + "], SID: " + sid + ", VN: " + vn + " }";
+		
+		
+		
+		System.out.println(s);
+		Cookie cookie = new Cookie(COOKIE_NAME, s);
+		int expiry = (int) ((exp - System.currentTimeMillis() + 999)/1000);
+		
 		if (isRetired() || expiry < 0){
 			expiry = 0;
 			cookie.setValue(sessionStateHR());
@@ -210,19 +230,32 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	}
 	
 
-	
+	/**
+	 * TODO not perserving message
+	 * @param buffer
+	 */
 	public void fillBufferForUDP(ByteBuffer buffer){
 		buffer.putLong(SESSION_OFFSET, sid);
 		buffer.putLong(EXP_OFFSET, exp);
 		buffer.putInt(VN_OFFSET, vn);
-		byte[] msgAsByteArray = msg.getBytes();
-		byte msg_length  = (byte) (msgAsByteArray.length/8);
-		buffer.put(MSG_LENGTH_OFFSET, msg_length);
-		for (int i = 0; i < msgAsByteArray.length && i < 64; i++)
+		
+		char[] m = msg.toCharArray();
+		buffer.putShort(MSG_LENGTH_OFFSET, (short) m.length);
+		for (int i = MSG_OFFSET; i < m.length; i++)
 		{
-			buffer.put(MSG_OFFSET + i, msgAsByteArray[i]);
+			buffer.put(MSG_OFFSET + i, (byte)(int)m[i]);
 		}
 	}
+	/**
+	 * TODO is valid ascii?
+	 * @param c
+	 * @return
+	 */
+	public boolean inRange(char c){
+		return (int)c >= 1 && (int)c <= 255;
+	}
+	
+	
 	
 	
 }

@@ -5,6 +5,7 @@ package ARR233;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,6 +16,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -28,7 +31,7 @@ import com.google.gson.JsonParser;
  */
 @WebServlet("/SessionHandler")
 public class SessionHandler extends HttpServlet {
-	private static final int localServerId = 0;
+	public static final byte K = 1;
 	/**
 	 * Serial Version UID
 	 */
@@ -36,11 +39,11 @@ public class SessionHandler extends HttpServlet {
 	/**
 	 * Session ID Generator TODO: make this not simple to guess
 	 */
-	private static final AtomicInteger SESSION_ID_GEN = new AtomicInteger(0);
+	private static final AtomicInteger SESSION_ID_GEN = new AtomicInteger(1);
 	/**
 	 * Session call ID Generator
 	 */
-	private static final AtomicInteger SESSION_CALL_GEN = new AtomicInteger(0);
+	private static final AtomicInteger SESSION_CALL_GEN = new AtomicInteger(1);
 	/**
 	 * See Debugging Printouts
 	 */
@@ -77,31 +80,58 @@ public class SessionHandler extends HttpServlet {
 		    throws IOException, ServletException
 		    { 
                 PrintWriter out = response.getWriter();
+
 		        try{
 		        	//Retrieve session table
 		        	SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
+		        	ViewManager vm = (ViewManager)getServletContext().getAttribute("viewmanager");
+		        	
 		        	//retrieve cookies
 			        Cookie[] cookies = request.getCookies();
 			        Cookie c = null;
 			        //look for correct cookie
+			        out.println("length" + cookies);
 			        for (int i = 0; cookies != null && i < cookies.length && c == null; i++){
+			        	
 			        	if (cookies[i].getName().equals(SimpleEntry.COOKIE_NAME)){
 			        		c = cookies[i];
 			        	}
 			        }
-			        
 			        SimpleEntry session = null;
 			        String erMsg = null;
 			        String sesStateMsg = null;
 			        String cVal = null; //cookie value
+			        ArrayList<Integer> srvs = new ArrayList<Integer>();
 			        if (c != null){
+			        	//get cookie info
 			        	cVal = c.getValue();
+			        	out.println(cVal);
 			        	try {
+			        		//parse JSOn
 			        		JsonObject cValAsJson = new JsonParser().parse(cVal).getAsJsonObject();
-			        		long cSessionID = Long.parseLong(cValAsJson.get("SID").getAsString(), 36);
-			        		session = sessions.get(cSessionID);
+			        		long cSessionID = Long.parseLong(cValAsJson.get("SID").getAsString());
+			        		JsonArray srvsJA = cValAsJson.get("SRVS").getAsJsonArray();
+			        		
+			        		boolean isLocal = false;
+			        		for (JsonElement js : srvsJA){	
+			        			int serverID = js.getAsInt();
+			        			
+			        			if (serverID != vm.localAddress){
+			        				srvs.add(js.getAsInt());
+			        				vm.addServer(new SimpleServer(js.getAsInt()));
+			        			} else {
+			        				isLocal = true;
+			        			}
+			        		}
+			        		
+			        		if (isLocal){ //if found locally
+			        			session = sessions.get(cSessionID);
+			        		} 
 			        		if (session == null){
-			        			erMsg = "Previous Session not found in table! x_x";
+			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
+			        		} 
+			        		if (session == null) {
+			        			erMsg = "Previous Session not found in System! x_x";
 			        		} else if (session.isRetired()) {
 			        			erMsg = "Session was already terminated! x_x";
 			        			c = null;
@@ -120,6 +150,9 @@ public class SessionHandler extends HttpServlet {
 			        	if (request.getParameter("retire") != null && session != null){
 			                session =  new SimpleEntry(session, false);
 			        		sessions.put(session);
+			        		
+			        		srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
+
 			        		session = null;
 			        		sesStateMsg = "Session Terminated Successfully";
 			        	} else if (session != null) { 
@@ -131,18 +164,27 @@ public class SessionHandler extends HttpServlet {
 			        			session = new SimpleEntry(session, true);
 			        		} 
 			        		sessions.put(session);
+			        		srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
+			        		srvs.add(vm.localAddress);
 			        	}
 			        }
-			      
+
+			        
 			        if (session == null){
-			        	session = new SimpleEntry(generateSessionID());
+			        	session = new SimpleEntry(generateSessionID(vm.localAddress));
+			        	System.out.println("made new session");
 			        	sessions.put(session);
+			        	System.out.println("stored session");
+			        	srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
+			        	srvs.add(vm.localAddress);
 			        	sesStateMsg = sesStateMsg == null ? "New Session Started" : sesStateMsg + "; New Session Started";
 			        }
-			        Cookie cookie = session.getAsCookie();
+
+			        
+			        Cookie cookie = session.getAsCookie(srvs);
 			        response.addCookie(cookie);
 			        response.setContentType("text/html");
-
+			        out.println(cookie);
 			        out.println(HTML_HEADER);
 			        out.println(session.msg);
 			        out.println(FORM_HEADER);
@@ -195,12 +237,12 @@ public class SessionHandler extends HttpServlet {
 	/**
 	 * @return
 	 */
-	private static long generateSessionID() {
+	private static long generateSessionID(int localServerId) {
 		int inServerId = SESSION_ID_GEN.getAndIncrement();
 		ByteBuffer hold = ByteBuffer.allocate(8);
 		hold.putInt(localServerId);
 		hold.putInt(4, inServerId);
-		return hold.getLong();
+		return hold.getLong(0);
 	}
 	public static int generateCallID() {
 		return SESSION_CALL_GEN.getAndIncrement();

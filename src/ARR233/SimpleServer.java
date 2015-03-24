@@ -3,7 +3,6 @@ package ARR233;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Date;
 
 public class SimpleServer implements Comparable<SimpleServer>{
@@ -11,22 +10,70 @@ public class SimpleServer implements Comparable<SimpleServer>{
 	public enum status_state { UP, DOWN };
 	public final long time_observed;
 	public final status_state status;
+	/**
+	 * Init from packet with start index
+	 * @param b
+	 * @param start
+	 */
+	public SimpleServer(ByteBuffer b, int start){
+		serverID = b.getInt(start);
+		time_observed = b.getLong(start + 4);
+		status = b.get(start + 12) == (byte) 1? status_state.UP : status_state.DOWN;
+	}
+	/**
+	 * Init form Inet, update time
+	 * @param serverID
+	 */
 	public SimpleServer(InetAddress serverID){
-		time_observed = new Date().getTime();
+		time_observed = System.currentTimeMillis();
 		this.serverID = inetToInt(serverID);
 		status = status_state.UP;
-		//                int serverID = ByteBuffer.wrap(packet.getAddress().getAddress()).getInt();
 	}
-
+	/**
+	 * Inet from data
+	 * @param serverID
+	 * @param time_observed
+	 * @param status
+	 */
 	public SimpleServer(InetAddress serverID, long time_observed, status_state status){
 		this.time_observed = time_observed;
 		this.serverID = inetToInt(serverID);
 		this.status = status;
 	}
 	
+	/**
+	 * Init form int, update time
+	 * @param serverID
+	 */
+	public SimpleServer(int serverID) {
+		this.serverID = serverID;
+		this.time_observed = System.currentTimeMillis();
+		this.status = status_state.UP;
+	}
+	/**
+	 * Init for int, status, update time
+	 * @param serverID
+	 * @param status
+	 */
+	public SimpleServer(int serverID, status_state status) {
+		this.serverID = serverID;
+		this.time_observed = System.currentTimeMillis();
+		this.status = status;
+	}
+	/**
+	 * 
+	 * @param inetAddress
+	 * @return
+	 */
 	public static int inetToInt(InetAddress inetAddress){
 		return ByteBuffer.wrap(inetAddress.getAddress()).getInt();
 	}
+	/**
+	 * Most recent observation comes first, if ID matches
+	 * @param address
+	 * @return
+	 * @throws UnknownHostException
+	 */
 	public static InetAddress intToInet(int address) throws UnknownHostException{
 		return InetAddress.getByAddress(ByteBuffer.allocate(4).putInt(address).array());
 	}
@@ -38,29 +85,43 @@ public class SimpleServer implements Comparable<SimpleServer>{
 		else 
 			return comp;
 	}
+	/**
+	 * String
+	 */
 	public String toString(){
 		
 		return "<" + serverID + (isUp() ? "Up" : "Down" ) + ", " + new Date(time_observed).toString() + ">"; 
 	}
-
+	/**
+	 * Status checker
+	 * @return
+	 */
 	private boolean isUp() {
 		// TODO Auto-generated method stub
 		return status == status_state.UP;
 	}
-	@Override
-	public int hashCode() {
-		return(serverID);
-	}
-	public int key(){
-		return serverID;
-	}
+	/**
+	 * Inet address of this server
+	 * @return
+	 */
 	public InetAddress serverAddress(){
 		try {
 			return intToInet(this.serverID);
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
+	}
+	/**
+	 * Represents this server as 13 bytes
+	 * @return
+	 */
+	public byte[] simpleServerByteArray(){
+		ByteBuffer b = ByteBuffer.allocate(13);
+		b.putInt(serverID);
+		b.putLong(4, time_observed);
+		b.put(12, status == status_state.UP ? (byte) 1 : (byte) 0);
+		return b.array();
+		
 	}
 }

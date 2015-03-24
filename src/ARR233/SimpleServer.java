@@ -3,7 +3,11 @@ package ARR233;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class SimpleServer implements Comparable<SimpleServer>{
 	public final int serverID;
@@ -60,6 +64,32 @@ public class SimpleServer implements Comparable<SimpleServer>{
 		this.time_observed = System.currentTimeMillis();
 		this.status = status;
 	}
+	
+	/**
+	 * Init with the output of another servers toString
+	 * @param serverData the toString output from a server
+	 */
+	public SimpleServer(String serverData) {
+		//<SERVERID, Up/Down, EEE MMM d HH:mm:ss zzz yyyy>
+		String data = serverData.substring(1, serverData.length()-1);
+		//SERVERID, Up/Down, EEE MMM d HH:mm:ss zzz yyyy		
+		String[] parts = data.split(",");
+		this.serverID = Integer.parseInt(parts[0]);
+		String upDown = parts[1];
+		if(upDown.equals("Up")){
+			this.status = status_state.UP;
+		} else {
+			this.status = status_state.DOWN;
+		}
+		DateFormat format = new SimpleDateFormat("EEE MMM d HH:mm:ss zzz yyyy", Locale.ENGLISH);
+		Date date = null;
+		try {
+			date = format.parse(parts[2]);
+		} catch (ParseException e) {
+			// This shouldn't happen because we control how this string is formed
+		}
+		this.time_observed = date.getTime();
+	}
 	/**
 	 * 
 	 * @param inetAddress
@@ -90,7 +120,7 @@ public class SimpleServer implements Comparable<SimpleServer>{
 	 */
 	public String toString(){
 		
-		return "<" + serverID + (isUp() ? "Up" : "Down" ) + ", " + new Date(time_observed).toString() + ">"; 
+		return "<" + serverID + "," + (isUp() ? "Up" : "Down" ) + "," + new Date(time_observed).toString() + ">"; 
 	}
 	/**
 	 * Status checker

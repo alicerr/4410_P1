@@ -37,6 +37,7 @@ public abstract class SessionFetcher {
 
 	public static final float FACTOR_TO_CHECK = 1.5f;
 	public static final short DATAGRAM_TIMEOUT = 5000;
+	private static final String DB_DOMAIN = "Project1bViews";
 	/**
 	 * Return a session, if found
 	 * @param callID 
@@ -215,13 +216,34 @@ public abstract class SessionFetcher {
 	return storedInSrvId;
 	
 	}
+	
+	/**
+	 * This is the gossip protocol for the database
+	 * @param vm the vm to update with the database vm
+	 */
+	public static void sessionMergerDB(ViewManager vm) {
+		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		dbhandle.domainExistsOrCreate(DB_DOMAIN);
+		ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
+		vm.merge(dbvm);
+		dbhandle.updateDBViews(DB_DOMAIN,vm);
+	}
+	
+	/**
+	 * This is a wrapper for sessionMerger for testing 
+	 * @param vm view manager to gossip with
+	 */
+	public static void sessionMerger(ViewManager vm) {
+		sessionMerger(vm,null);
+	}
+	
 	/**
 	 * Mergers sessions by intiating UDP
 	 * @param vm
+	 * @param s server to gossip with
 	 */
-	public static void sessionMerger(ViewManager vm){
-		SimpleServer s = null;
-		
+	public static void sessionMerger(ViewManager vm, SimpleServer s){
+		// If null is passed in, we find one or just return, else if s is a real server we try to gossip with it
 		while ((s == null || s.status == SimpleServer.status_state.DOWN) && vm.hasUpServers()){ 
 			
 			s = vm.getAServer();

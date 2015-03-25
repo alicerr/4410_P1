@@ -167,7 +167,7 @@ public class SessionHandler extends HttpServlet {
 			        		srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        		srvs.add(vm.localAddress);
 			        	}
-			        }
+			        } // end not null cookie
 
 			        
 			        if (session == null){
@@ -184,12 +184,12 @@ public class SessionHandler extends HttpServlet {
 			        Cookie cookie = session.getAsCookie(srvs);
 			        response.addCookie(cookie);
 			        response.setContentType("text/html");
-			        out.println(cookie);
+			        //out.println(cookie);
 			        out.println(HTML_HEADER);
 			        out.println(session.msg);
 			        out.println(FORM_HEADER);
-			        out.println("    Please include html block elements, images, and formating in message   <br />");
-			        out.println("    <input type=\"text\" name=\"new_message\" value=\"<p> </p>\" >\n<br />");
+			        //out.println("    Please include html block elements, images, and formating in message   <br />");
+			        out.println("    <input type=\"text\" name=\"new_message\" value=\"\" >\n<br />");
 			        out.println("    <input type=\"submit\" value=\"Replace Message\" name=\"replace\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Extend Session\" name=\"refresh\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Retire Session\" name=\"retire\" />\n");

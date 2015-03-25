@@ -21,7 +21,6 @@ import javax.servlet.annotation.WebListener;
 public class SessionTableHandler implements ServletContextListener {
 	
 
-		private static final String DB_DOMAIN = "Project1bViews";
 	    /**
 	     * the thread pool to remove old sessions
 	     */
@@ -35,6 +34,10 @@ public class SessionTableHandler implements ServletContextListener {
 	     *  thread to listen to the port for new request
 	     */
 	    private SessionServerThread listener = null;
+	    /**
+	     *  Runnable service to take care of gossiping
+	     */
+	    private GossipService gossiper = null;
 	    /**
 	     * Shutdown initiator for ^
 	     */
@@ -57,10 +60,7 @@ public class SessionTableHandler implements ServletContextListener {
 				//TODO get amavon IP
 
 				// Connect to SimpleDB and get all Views. Merge them. 
-				dbhandle = new SimpleDBHandler("AwsCredentials.properties");
-				ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
-				vm.merge(dbvm);
-				dbhandle.updateDBViews(DB_DOMAIN,vm);
+				SessionFetcher.sessionMergerDB(vm);
 				
 				System.out.println("IP of my system is := "+IP.getHostAddress());
 				
@@ -93,6 +93,11 @@ public class SessionTableHandler implements ServletContextListener {
 	        } catch(Exception e) {
 	           e.printStackTrace();
 	        }
+			
+			System.out.println("Starting Gossip Service");
+			gossiper = new GossipService(vm);
+			gossiper.start();
+			System.out.println("Gossip Service Started");
 	        
 		}
 		/* (non-Javadoc)

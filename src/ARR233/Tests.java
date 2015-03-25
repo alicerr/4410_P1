@@ -13,11 +13,13 @@ public class Tests extends SessionFetcher{
 	public static void main(String[] args) throws Exception {
 		
 		//WhatIsInTheDB();
-		//TestDeleteDomain();
+		TestDeleteDomain();
 		//TestSimpleDBHandler();
 		//TestMergeDB();
+		// GOSSIP TESTS can't be run together. The socket is not closed by the test befoer
+		//   which causes the 2nd test to error out.
 		//TestGossip(false);
-		TestGossip(true);
+		//TestGossip(true);
 		
 	}
 
@@ -110,7 +112,9 @@ public class Tests extends SessionFetcher{
 		System.out.println("Testing gossip with running server set to: " + running);
 		SessionTable st = new SessionTable();
 		//other vm
-		ViewManager myVM = new ViewManager(SimpleServer.inetToInt(InetAddress.getLocalHost()));
+		// These are hardcoded - not sure how to get the sending address properly
+		ViewManager myVM = new ViewManager(2130706433); // real serverID for localhost on my machine
+		myVM.addServer(new SimpleServer(2130706435)); // Made up server (not valid) just here for gossip
 		System.out.println("myVM");
 		printVM(myVM);
 		ViewManager otherRunningVM = new ViewManager(SimpleServer.inetToInt(InetAddress.getByName("google.com")));
@@ -132,6 +136,9 @@ public class Tests extends SessionFetcher{
 		
 		if(running)
 			thread.kill();
+		
+		System.out.println("========================================================\n"
+				+ "PLEASE STOP THIS PROCESS.... THREAD IS NOT KILLING ITSELF");
 	}
 		
 }

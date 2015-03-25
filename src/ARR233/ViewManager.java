@@ -140,7 +140,6 @@ public class ViewManager  implements Runnable {
 	@Override
 	public void run() {
 		
-		
 	}
 	public boolean hasUpServers() {
 		return runningServers.get() > 0;

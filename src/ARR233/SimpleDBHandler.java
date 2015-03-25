@@ -47,6 +47,13 @@ public class SimpleDBHandler {
 		List<String> domains = db.listDomains().getDomainNames();
 		return domains.contains(domain);
 	}
+	
+	public void domainExistsOrCreate(String domain) {
+		if(!domainExists(domain)) {
+			createDomain(domain);
+			System.out.println("New SimpleDB Domain Created");
+		}
+	}
 
 	private List<SimpleServer> getAllViewData(String domain) {
 		List<SimpleServer> serverList = new ArrayList<SimpleServer>();

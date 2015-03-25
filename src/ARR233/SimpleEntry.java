@@ -129,7 +129,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
      * @return session has expired
      */
     public boolean isExpired(){
-    	return new Date().getTime() > exp;
+    	return System.currentTimeMillis() > exp;
     }
 	/**
 	 * A method to clean the session message

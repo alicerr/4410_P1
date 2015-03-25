@@ -45,7 +45,7 @@ public class SessionTable implements Runnable {
     		boolean outdated = false;
     		while (!outdated && !success){
     			//you can't un-retire (-1) a session
-    			outdated = (oldEntry.vn >= session.vn || oldEntry.vn != -1) && session.vn > -1;  
+    			outdated = (oldEntry.vn >= session.vn || oldEntry.vn == -1) && session.vn > -1;  
     			if (!outdated){
     				success = table.replace(session.sid, oldEntry, session);
     				if (!success){

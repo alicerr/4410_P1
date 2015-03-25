@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import com.amazonaws.auth.AWSCredentials;
+
+
 
 public abstract class SessionFetcher {
 	/**
@@ -222,7 +225,7 @@ public abstract class SessionFetcher {
 	 * @param vm the vm to update with the database vm
 	 */
 	public static void sessionMergerDB(ViewManager vm) {
-		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		SimpleDBHandler dbhandle = new SimpleDBHandler("C:\\Users\\Alice\\Google Drive\\New folder\\Assignment1A\\AwsCredentials.properties");
 		dbhandle.createDomain(DB_DOMAIN);
 		ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
 		vm.merge(dbvm);

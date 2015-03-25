@@ -46,9 +46,9 @@ public class ViewManager  implements Runnable {
 		//TODO avoid adding local address
 		// I commented this out because the a server should have it's own info in
 		// the viewManager. 
-		/*if (newServer.serverID == localAddress){
-			return false;
-		}*/
+		/**if (newServer.serverID == localAddress){
+			**return false;
+		}**/
 		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
 		boolean success = oldServer == null;
 		if (success){

@@ -80,7 +80,7 @@ public class SessionHandler extends HttpServlet {
 		    throws IOException, ServletException
 		    { 
                 PrintWriter out = response.getWriter();
-
+		        System.out.println("cookie");
 		        try{
 		        	//Retrieve session table
 		        	SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
@@ -90,22 +90,23 @@ public class SessionHandler extends HttpServlet {
 			        Cookie[] cookies = request.getCookies();
 			        Cookie c = null;
 			        //look for correct cookie
-			        out.println("length" + cookies);
 			        for (int i = 0; cookies != null && i < cookies.length && c == null; i++){
 			        	
 			        	if (cookies[i].getName().equals(SimpleEntry.COOKIE_NAME)){
 			        		c = cookies[i];
 			        	}
 			        }
+			        int i = 1;
 			        SimpleEntry session = null;
 			        String erMsg = null;
 			        String sesStateMsg = null;
+			        System.out.println(i++ + "1");
 			        String cVal = null; //cookie value
 			        ArrayList<Integer> srvs = new ArrayList<Integer>();
 			        if (c != null){
+			        	System.out.println("found cookie");
 			        	//get cookie info
 			        	cVal = c.getValue();
-			        	out.println(cVal);
 			        	try {
 			        		//parse JSOn
 			        		JsonObject cValAsJson = new JsonParser().parse(cVal).getAsJsonObject();
@@ -124,10 +125,14 @@ public class SessionHandler extends HttpServlet {
 			        			}
 			        		}
 			        		
-			        		if (isLocal){ //if found locally
+			        		if (isLocal /*&& false*/){ //if found locally
+			        			System.out.println("looking in local table for cookies");
 			        			session = sessions.get(cSessionID);
+			        			System.out.println("I found this in local table: " + session);
 			        		} 
-			        		if (session == null){
+			        		//srvs.add(vm.localAddress);
+			        		if (session == null && srvs.size() > 0){
+			        			System.out.println("checking remote servers");
 			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
 			        		} 
 			        		if (session == null) {
@@ -146,7 +151,7 @@ public class SessionHandler extends HttpServlet {
 			        			erMsg = "Error Handling Request, Please Contact: [SysAdmin]";
 			        		}
 			        	}
-			        	
+				        System.out.println(i++ + "2");
 			        	if (request.getParameter("retire") != null && session != null){
 			                session =  new SimpleEntry(session, false);
 			        		sessions.put(session);
@@ -168,22 +173,26 @@ public class SessionHandler extends HttpServlet {
 			        		srvs.add(vm.localAddress);
 			        	}
 			        } // end not null cookie
+			        else {
+			        	System.out.println("no cookie found");
+			        }
 
-			        
+			        System.out.println(i++ + "after cookie check");
 			        if (session == null){
 			        	session = new SimpleEntry(generateSessionID(vm.localAddress));
 			        	System.out.println("made new session");
 			        	sessions.put(session);
 			        	System.out.println("stored session");
-			        	srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
+			        	//srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        	srvs.add(vm.localAddress);
 			        	sesStateMsg = sesStateMsg == null ? "New Session Started" : sesStateMsg + "; New Session Started";
 			        }
-
+			        System.out.println(i++ + "about to make cookie");
 			        
 			        Cookie cookie = session.getAsCookie(srvs);
 			        response.addCookie(cookie);
 			        response.setContentType("text/html");
+			        System.out.println(i++ + "made cookie");
 			        //out.println(cookie);
 			        out.println(HTML_HEADER);
 			        out.println(session.msg);

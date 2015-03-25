@@ -208,12 +208,12 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * @return JSON Cookie of this session, including Session ID in base 36, Version number in base 36 and MetaData in its value
 	 */
 	public Cookie getAsCookie(ArrayList<Integer> srvs){
-	
+		
 		String s = "{ SRVS: "+ "[";
 		for (Integer srv: srvs){
 			s += srv + ", ";
 		}
-		s = s.substring(0,s.lastIndexOf(',')) + "], SID: " + sid + ", VN: " + vn + " }";
+		s = (s.lastIndexOf(',') > 0 ? s.substring(0,s.lastIndexOf(',')) : s)+ "], SID: " + sid + ", VN: " + vn + " }";
 		
 		
 		
@@ -241,9 +241,9 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		
 		char[] m = msg.toCharArray();
 		buffer.putShort(MSG_LENGTH_OFFSET, (short) m.length);
-		for (int i = MSG_OFFSET; i < m.length; i++)
+		for (int i = 0; i < m.length + 0; i++)
 		{
-			buffer.put(MSG_OFFSET + i, (byte)(int)m[i]);
+			buffer.put(MSG_OFFSET + i, (byte)m[i]);
 		}
 	}
 	/**

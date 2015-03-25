@@ -223,7 +223,7 @@ public abstract class SessionFetcher {
 	 */
 	public static void sessionMergerDB(ViewManager vm) {
 		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
-		dbhandle.domainExistsOrCreate(DB_DOMAIN);
+		dbhandle.createDomain(DB_DOMAIN);
 		ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
 		vm.merge(dbvm);
 		dbhandle.updateDBViews(DB_DOMAIN,vm);

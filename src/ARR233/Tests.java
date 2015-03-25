@@ -12,8 +12,8 @@ public class Tests extends SessionFetcher{
 	
 	public static void main(String[] args) throws Exception {
 		
-		//WhatIsInTheDB();
-		TestDeleteDomain();
+		WhatIsInTheDB();
+		//TestDeleteDomain();
 		//TestSimpleDBHandler();
 		//TestMergeDB();
 		// GOSSIP TESTS can't be run together. The socket is not closed by the test befoer
@@ -31,12 +31,13 @@ public class Tests extends SessionFetcher{
 
 	private static SimpleDBHandler setUpDBandDomain() {
 		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
-		if(dbhandle.domainExists(domain)) {
+		dbhandle.createDomain(domain);
+		/*if(dbhandle.domainExists(domain)) {
 			System.out.println(domain + " already existed.");
 		} else {
 			dbhandle.createDomain(domain);
 			System.out.println("Created domain " + domain);
-		}
+		}*/
 		
 		return dbhandle;
 	}

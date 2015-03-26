@@ -29,7 +29,6 @@ public class SimpleDBHandler {
 	public boolean dbNotNull(){ return db != null; }
 	public boolean connectToAccount(String credentialsFile, boolean isAliceComputer){
 		boolean success = false;
-		System.out.println(credentialsFile);
 		try {
 			InputStream is = isAliceComputer? new FileInputStream(credentialsFile) : SimpleDBHandler.class.getResourceAsStream(credentialsFile);
 			System.out.println(is);

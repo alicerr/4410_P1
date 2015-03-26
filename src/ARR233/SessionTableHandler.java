@@ -30,11 +30,6 @@ public class SessionTableHandler implements ServletContextListener {
 	     */
 	    private ScheduledThreadPoolExecutor executor = null;
 	    /**
-	     * pool to merge old sessions
-	     */
-	    private ScheduledThreadPoolExecutor merger = null;
-	    
-	    /**
 	     *  thread to listen to the port for new request
 	     */
 	    private SessionServerThread listener = null;
@@ -52,12 +47,10 @@ public class SessionTableHandler implements ServletContextListener {
 		@Override
 		public void contextInitialized(ServletContextEvent sce) {
 			executor = new ScheduledThreadPoolExecutor(1);
-			merger = new ScheduledThreadPoolExecutor(2);
 			SessionTable sessions = new SessionTable();
-			System.out.println(sessions);
+			//System.out.println(sessions);
 			ViewManager vm = null; 
 			InetAddress IP;
-			SimpleDBHandler dbhandle;
 			try {
 				//IP = InetAddress.getLocalHost();
 				String ipString = getIpAddress();
@@ -92,12 +85,11 @@ public class SessionTableHandler implements ServletContextListener {
 			}
 			//Check for sessions expired  once a day
 			try {
-			   System.out.println("starting processes");
+			   System.out.println("Session Cleanup Processes Starting");
 	           executor.scheduleAtFixedRate(sessions, 
-	                    30, 30, TimeUnit.MINUTES);
+	                    5, 5, TimeUnit.MINUTES);
 	           //merge handler
-	           merger.scheduleAtFixedRate(vm, 30, 30, TimeUnit.MINUTES);
-	           System.out.println("processes started");
+	           System.out.println("Session Cleanup Processes Started");
 	        } catch(Exception e) {
 	           e.printStackTrace();
 	        }
@@ -114,7 +106,6 @@ public class SessionTableHandler implements ServletContextListener {
 		@Override
 		public void contextDestroyed(ServletContextEvent arg0) {
 			 executor.shutdown();
-			 merger.shutdown();
 			 keepListenerAlive[0] = false;
 			 	
 			 

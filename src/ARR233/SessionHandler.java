@@ -70,8 +70,7 @@ public class SessionHandler extends HttpServlet {
 	 */
 	private static final String HTML_FOOTER = 
 											  "</body>"
-											+ "</html>";
-	
+											+ "</html>";	
 	/**
 	 *  @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -80,8 +79,6 @@ public class SessionHandler extends HttpServlet {
 		    throws IOException, ServletException
 		    { 
                 PrintWriter out = response.getWriter();
-		        System.out.println("cookie");
-		        out.println("here");
 		        try{
 		        	//Retrieve session table
 		        	SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
@@ -97,11 +94,11 @@ public class SessionHandler extends HttpServlet {
 			        		c = cookies[i];
 			        	}
 			        }
-			        int i = 1;
+			        //int i = 1;
 			        SimpleEntry session = null;
 			        String erMsg = null;
 			        String sesStateMsg = null;
-			        System.out.println(i++ + "1");
+			        //System.out.println(i++ + "1");
 			        String cVal = null; //cookie value
 			        ArrayList<Integer> srvs = new ArrayList<Integer>();
 			        if (c != null){
@@ -127,12 +124,12 @@ public class SessionHandler extends HttpServlet {
 			        		}
 			        		
 			        		if (isLocal){ //if found locally
-			        			System.out.println("looking in local table for cookies");
+			        			//System.out.println("looking in local table for cookies");
 			        			session = sessions.get(cSessionID);
-			        			System.out.println("I found this in local table: " + session);
+			        			//System.out.println("I found this in local table: " + session);
 			        		}
 			        		if (session == null && srvs.size() > 0){
-			        			System.out.println("checking remote servers");
+			        			//System.out.println("checking remote servers");
 			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
 			        		} 
 			        		if (session == null) {
@@ -151,7 +148,7 @@ public class SessionHandler extends HttpServlet {
 			        			erMsg = "Error Handling Request, Please Contact: [SysAdmin]";
 			        		}
 			        	}
-				        System.out.println(i++ + "2");
+				        //System.out.println(i++ + "2");
 			        	if (request.getParameter("retire") != null && session != null){
 			                session =  new SimpleEntry(session, false);
 			        		sessions.put(session);
@@ -173,26 +170,26 @@ public class SessionHandler extends HttpServlet {
 			        		srvs.add(vm.localAddress);
 			        	}
 			        } // end not null cookie
-			        else {
-			        	System.out.println("no cookie found");
-			        }
+			        //else {
+			        	//System.out.println("no cookie found");
+			        //}
 
-			        System.out.println(i++ + "after cookie check");
+			       // System.out.println(i++ + "after cookie check");
 			        if (session == null){
 			        	session = new SimpleEntry(generateSessionID(vm.localAddress));
-			        	System.out.println("made new session");
+			        	//System.out.println("made new session");
 			        	sessions.put(session);
-			        	System.out.println("stored session");
+			        	//System.out.println("stored session");
 			        	//srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        	srvs.add(vm.localAddress);
 			        	sesStateMsg = sesStateMsg == null ? "New Session Started" : sesStateMsg + "; New Session Started";
 			        }
-			        System.out.println(i++ + "about to make cookie");
+			        //System.out.println(i++ + "about to make cookie");
 			        
 			        Cookie cookie = session.getAsCookie(srvs);
 			        response.addCookie(cookie);
 			        response.setContentType("text/html");
-			        System.out.println(i++ + "made cookie");
+			        //System.out.println(i++ + "made cookie");
 			        //out.println(cookie);
 			        out.println(HTML_HEADER);
 			        out.println(session.msg);
@@ -202,7 +199,6 @@ public class SessionHandler extends HttpServlet {
 			        out.println("    <input type=\"submit\" value=\"Replace Message\" name=\"replace\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Extend Session\" name=\"refresh\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Retire Session\" name=\"retire\" />\n");
-			        out.println(vm.toString().replaceAll("\n", " <br> "));
 			        out.println(vm.localAddress);
 			        out.println(FORM_FOOTER);
 			        if (sesStateMsg != null)
@@ -210,13 +206,19 @@ public class SessionHandler extends HttpServlet {
 			        if (erMsg != null)
 			        	out.println("<p>ERROR MESSAGE: "+erMsg+"</p>");
 			        if (DEBUG) {
+			        	
 			        	out.println("<h2>Debugging Information</h2>");
+			        	out.println("<h4>Current Address: " + vm.localAddress + "</h4>");
+				        out.println(session.htmlFormattedDebugMessage());
 			        	if (cVal != null){
 			        		out.println("<p>Retrieved Cookie Value: " + cVal +"</p>");
 			        	}
-			        	out.println("<p>Session Value Retrieved or Created (retrived sessions will show in pre-updated form): </p>");
-			        	out.println(sessions.toString().replaceAll("\n", " <br> "));
-			        	out.println(session.htmlFormattedDebugMessage());
+				        out.println("<p>Session Value Retrieved or Created (retrived sessions will show in pre-updated form): </p>");
+				        out.println("<h3>Data in session table:</h3>");
+				        out.println(sessions.toString().replaceAll("\n", " <br> "));
+				        out.println("<h3>View Data:</h3>");
+				        out.println(vm.toString().replaceAll("\n", " <br> "));
+				        	
 			        }
 			        out.println(HTML_FOOTER);
 		        } catch (Exception e){
@@ -227,7 +229,6 @@ public class SessionHandler extends HttpServlet {
 		        }
 		        
 		    }
-
 	/**
 	 * 
 	 */
@@ -239,10 +240,8 @@ public class SessionHandler extends HttpServlet {
 	/**
 	 * 
 	 */
-	public boolean doPutDatagram(SimpleEntry session){ 
-            
-	        
-	        	//Retrieve session table
+	public boolean doPutDatagram(SimpleEntry session){      
+	   //Retrieve session table
 	   SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
 	   return sessions.put(session);	        
 	}

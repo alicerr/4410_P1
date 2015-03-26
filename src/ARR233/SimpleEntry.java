@@ -5,12 +5,8 @@ package ARR233;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.servlet.http.Cookie;
-
-import com.google.gson.Gson;
-import  com.google.common.base.Ascii;
 /**
  * @author Alice
  *Immutable simple entry class
@@ -55,7 +51,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	public SimpleEntry(long sessionID){
 		this.sid = sessionID;
 		this.vn = 0;
-		this.msg = "Hello World";
+		this.msg = "<p>Hello World</p>\n<img src=\"http://www.fws.gov/northeast/ecologicalservices/turtle/images/EBTU_boxturtle_Fusco300.jpg\" />";
 		this.exp = System.currentTimeMillis() + TTL;
 	}
 	/**
@@ -85,10 +81,11 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		this.exp = recvPkt.getLong(EXP_OFFSET);
 		short message_length = recvPkt.getShort(MSG_LENGTH_OFFSET);
 		String s = "";
+		
 		for (int i = MSG_OFFSET; i < MSG_OFFSET + message_length ; i ++){
 			s += (char)(int)recvPkt.get(i);
 		}
-		
+		//System.out.println("message length" + s.length());
 		this.msg = s;
 	}
 	/**
@@ -144,8 +141,9 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 			}
 		}
 		message =  org.owasp.html.Sanitizers.BLOCKS.and(
-				org.owasp.html.Sanitizers.FORMATTING
-		).sanitize(message);
+				org.owasp.html.Sanitizers.FORMATTING).and(
+				org.owasp.html.Sanitizers.IMAGES
+		).sanitize(sessionMessage);
 		if (message.length() > MAX_MSG_SIZE_ASCII){
 			message = message.substring(0, MAX_MSG_SIZE_ASCII);
 		}

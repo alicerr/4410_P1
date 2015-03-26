@@ -25,7 +25,6 @@ public class SessionServerThread extends Thread {
     }
  
     public void run() {
-    	
         while (keepGoing[0] == true) {
             try {
                 byte[] buf = new byte[512];
@@ -103,7 +102,6 @@ public class SessionServerThread extends Thread {
     
     public void kill(){
     	keepGoing[0] = false;
-    	System.out.println("Killed SessionServerThread");
     }
  
     

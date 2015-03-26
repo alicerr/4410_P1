@@ -52,9 +52,7 @@ public class SessionTable implements Runnable {
     					oldEntry = table.get(session.sid);
     				}
     			}
-    		}
-    		
-    			
+    		}		
     	}
     	return success;
     }
@@ -91,7 +89,6 @@ public class SessionTable implements Runnable {
 		long removed = removeOldEntries();
 		System.out.println("Table Update complete, # sessions removed: " + removed);
 	}
-	
 	public String toString(){
 		String s = "Session Table Contents:\n";
 		Enumeration<SimpleEntry> e = table.elements();

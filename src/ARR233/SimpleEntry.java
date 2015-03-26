@@ -170,7 +170,9 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
      * @see java.lang.Object#toString()
      */
     public String toString(){
-    	return "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp)+ ", MSG: " + msg; 
+
+    	String minimsg = msg.length() > 10 ? msg.substring(0, 10): msg;
+    	return "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp)+ ", MSG: " + minimsg; 
     }
     /**
      * A HTML formatted version of toString for debugging
@@ -216,7 +218,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		
 		
 		
-		System.out.println(s);
+		//System.out.println(s);
 		Cookie cookie = new Cookie(COOKIE_NAME, s);
 		int expiry = (int) ((exp - System.currentTimeMillis() + 999)/1000);
 		

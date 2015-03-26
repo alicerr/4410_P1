@@ -27,8 +27,8 @@ public class SessionTable implements Runnable {
      * @return the session if found, otherwise null
      */
     public SimpleEntry get(long id){
-    	System.out.println("table size:" + table.size());
-    	System.out.println("id: " + id);
+    	//System.out.println("table size:" + table.size());
+    	//System.out.println("id: " + id);
     	return table.get(id);
     }
     /**
@@ -39,8 +39,8 @@ public class SessionTable implements Runnable {
     public boolean put(SimpleEntry session){
     	SimpleEntry oldEntry = table.putIfAbsent(session.sid, session);
     	boolean success = oldEntry == null;
-    	System.out.println(oldEntry);
-    	System.out.println(table.get(session.sid));
+    	//System.out.println(oldEntry);
+    	//System.out.println(table.get(session.sid));
     	if (!success){
     		boolean outdated = false;
     		while (!outdated && !success){

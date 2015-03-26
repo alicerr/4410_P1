@@ -31,7 +31,7 @@ public class SimpleDBHandler {
 		boolean success = false;
 		try {
 			InputStream is = isAliceComputer? new FileInputStream(credentialsFile) : SimpleDBHandler.class.getResourceAsStream(credentialsFile);
-			System.out.println(is);
+			//System.out.println(is);
 			db = new AmazonSimpleDBClient(new PropertiesCredentials(is));
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -90,7 +90,7 @@ public class SimpleDBHandler {
 
 	public void createDomain(String domain) {
 		CreateDomainRequest request = new CreateDomainRequest(domain);
-		System.out.println(db);
+		//System.out.println(db);
 		db.createDomain(request);
 	}
 	

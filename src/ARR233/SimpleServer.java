@@ -91,7 +91,7 @@ public class SimpleServer implements Comparable<SimpleServer>{
 		this.time_observed = date.getTime();
 	}
 	/**
-	 * 
+	 * Converts an IPV4 inet address to an int
 	 * @param inetAddress
 	 * @return
 	 */
@@ -119,7 +119,6 @@ public class SimpleServer implements Comparable<SimpleServer>{
 	 * String
 	 */
 	public String toString(){
-		
 		return "<" + serverID + "," + (isUp() ? "Up" : "Down" ) + "," + new Date(time_observed).toString() + ">"; 
 	}
 	/**

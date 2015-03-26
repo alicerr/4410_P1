@@ -13,17 +13,26 @@ import javax.servlet.http.Cookie;
  *Assumed to be unique by: Session, Version
  */
 public final class SimpleEntry implements Comparable<SimpleEntry>{
+	/**
+	 * Offsets for sections of the message, defined in order
+	 */
 	public static final byte SESSION_OFFSET = SessionFetcher.MESSAGE_OFFSET;
 	public static final byte EXP_OFFSET = SESSION_OFFSET + 8;
 	public static final byte VN_OFFSET = EXP_OFFSET + 8;
 	public static final short MSG_LENGTH_OFFSET = VN_OFFSET + 4; 
 	public static final byte MSG_OFFSET = MSG_LENGTH_OFFSET+ 2;
-	public final static int TTL = 1000 * 60 * 60 * 6;
+	/**
+	 * Time a session stays alive (millis)
+	 */
+	public final static int TTL = 1000 * 60 * 60 * 1;
+	/**
+	 * The most charecters a message can have. Not aqtually straight ASCII but close (8 bits)
+	 */
 	public static final short MAX_MSG_SIZE_ASCII  = (short)(512-MSG_OFFSET);
 	/**
-	 * 
+	 * The name of the cookie
 	 */
-	public static final String COOKIE_NAME = "CS5300_A1_ARR233_SP2015";
+	public static final String COOKIE_NAME = "CS5300_A1_ARRSP_SP2015";
 	/**
 	 * Session ID, assumed to be unique to servlet per session
 	 */
@@ -38,7 +47,6 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	public final int vn;
 
 
-	//set session timeout for 6 hours from now every time a cookie is created
 	/**
 	 * Expiration date
 	 */
@@ -64,6 +72,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		sid = session.sid;
 		vn = newVersionNumber(session, true);
 		exp = !session.isExpired() && ! session.isRetired() ? System.currentTimeMillis() + TTL : session.exp;
+		//dont replace the message if retired or expired
 		if (!session.isExpired() && ! session.isRetired()){
 			msg = sanitizeSessionMessage(message);
 		} else {
@@ -71,22 +80,20 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		}
 	}
 	/**
-	 * TODO: not getting message properly ('hello world' message)
-	 * Conversion problems
+	 * Build a session from a UDP packet's contents
 	 * @param recvPkt
 	 */
 	public SimpleEntry(ByteBuffer recvPkt){
 		this.sid = recvPkt.getLong(SESSION_OFFSET);
 		this.vn = recvPkt.getInt(VN_OFFSET);
 		this.exp = recvPkt.getLong(EXP_OFFSET);
+		//msg
 		short message_length = recvPkt.getShort(MSG_LENGTH_OFFSET);
 		String s = "";
-		
 		for (int i = MSG_OFFSET; i < MSG_OFFSET + message_length ; i ++){
 			s += (char)(int)recvPkt.get(i);
 		}
-		//System.out.println("message length" + s.length());
-		this.msg = s;
+		this.msg = sanitizeSessionMessage(s);
 	}
 	/**
 	 * Constructor for renewing or retiring a session
@@ -255,8 +262,4 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	public boolean inRange(char c){
 		return (int)c >= 1 && (int)c <= 255;
 	}
-	
-	
-	
-	
 }

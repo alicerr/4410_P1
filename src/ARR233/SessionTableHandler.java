@@ -48,33 +48,24 @@ public class SessionTableHandler implements ServletContextListener {
 		public void contextInitialized(ServletContextEvent sce) {
 			executor = new ScheduledThreadPoolExecutor(1);
 			SessionTable sessions = new SessionTable();
-			//System.out.println(sessions);
 			ViewManager vm = null; 
 			InetAddress IP;
 			try {
-				//IP = InetAddress.getLocalHost();
 				String ipString = getIpAddress();
 				IP = InetAddress.getByName(ipString);
 				vm = new ViewManager(SimpleServer.inetToInt(IP));
-				//TODO get amavon IP
-				
 				// Connect to SimpleDB and get all Views. Merge them. 
 				SessionFetcher.sessionMergerDB(vm);
-				
 				System.out.println("IP of my system is := "+IP.getHostAddress());
-				
 			} catch (UnknownHostException e2) {
-				// TODO Auto-generated catch block
 				e2.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
-			
 			//get this from here later
 			sce.getServletContext().setAttribute("sessions", sessions);
 			sce.getServletContext().setAttribute("viewmanager", vm);
-			//start tasks
+			//start  tasks
 			try {
 				System.out.println("starting listener");
 				listener = new SessionServerThread(sessions, vm, keepListenerAlive);
@@ -83,7 +74,7 @@ public class SessionTableHandler implements ServletContextListener {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			//Check for sessions expired  once a day
+			//Check for sessions expired every 5 minutes
 			try {
 			   System.out.println("Session Cleanup Processes Starting");
 	           executor.scheduleAtFixedRate(sessions, 
@@ -106,11 +97,14 @@ public class SessionTableHandler implements ServletContextListener {
 		@Override
 		public void contextDestroyed(ServletContextEvent arg0) {
 			 executor.shutdown();
-			 keepListenerAlive[0] = false;
-			 	
-			 
+			 listener.kill();
 		}
-		
+		/**
+		 * Get remote IP address of local host
+		 * @return the IP as a string
+		 * @throws MalformedURLException
+		 * @throws IOException
+		 */
 		public static String getIpAddress() throws MalformedURLException, IOException {
 			URL myIP = new URL("http://myip.dnsomatic.com/");
 			BufferedReader in = new BufferedReader(new InputStreamReader(myIP.openStream()));

@@ -14,10 +14,14 @@ import java.util.Enumeration;
 import java.util.List;
 
 
-
+/**
+ * Handles UDP packet requests, recieving genrated responses, updating the view with these
+ * @author Alice/Spencer
+ *
+ */
 public abstract class SessionFetcher {
 	/**
-	 * Operation codes
+	 * Operation codes for the 
 	 */
 	public static final byte READ = 0, 
 							 WRITE = 1, 
@@ -30,32 +34,34 @@ public abstract class SessionFetcher {
 	
 	public static final short portProj1bRPC = 5306, MAX_BYTES_FOR_UDP = 512;
 	/**
-	 * (pre-message) Packet offsets (more in SimpleEntry, SimpleServer)
+	 * (pre-message) Packet offsets (messaage offsets in SimpleEntry, SimpleServer)
 	 */
 	public static final byte CALL_ID_OFFSET = 0, 
 			                 OPERATION_OFFSET = 4,  
 			                 MESSAGE_OFFSET = 5;
 
-
+	/**
+	 * Given a need for X write responses we send out FACTOR TO CHECK * X requests, rounded up
+	 */
 	public static final float FACTOR_TO_CHECK = 1.5f;
 	public static final short DATAGRAM_TIMEOUT = 5000;
 	private static final String DB_DOMAIN = "Project1bViews";
 	/**
-	 * Return a session, if found
+	 * Return a session, if found at another server
 	 * @param callID 
 	 * @param sessionID
-	 * @param destAddrs
+	 * @param destAddrs -- addresses to check
 	 * @param vm
-	 * @return
+	 * @return SimpleEntry session or null if not retrieved
 	 */
 	public static SimpleEntry fetchSession(int callID, long sessionID, List<Integer> destAddrs, ViewManager vm){
-
+			//build packet
 			ByteBuffer request = ByteBuffer.allocate(13);
 			request.putInt(CALL_ID_OFFSET, callID);
 			request.put(OPERATION_OFFSET, READ);
 			request.putLong(MESSAGE_OFFSET, sessionID); //session id is the message
 			byte[] requestMessage = request.array();
-
+			//send requests
 			DatagramSocket rpcSocket;				
 			SimpleEntry sessionFetched = null;
 			try {
@@ -69,7 +75,7 @@ public abstract class SessionFetcher {
 					    rpcSocket.send(sendPkt);
 					}
 				}
-				//collect response
+				//collect first response
 				byte [] inBuf = new byte[512];
 				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 				ByteBuffer data = null;
@@ -78,13 +84,12 @@ public abstract class SessionFetcher {
 					      recvPkt.setLength(inBuf.length);
 					      rpcSocket.receive(recvPkt);
 					      vm.addServer(new SimpleServer(recvPkt.getAddress()));
-					      
 					      data = ByteBuffer.wrap(recvPkt.getData());
 					      if (data.getInt(CALL_ID_OFFSET) == callID)
 					    	  destAddrs.remove(recvPkt.getAddress()); //this server is alive at least 
 					    } while( !(data.getInt(CALL_ID_OFFSET) == callID && data.get(OPERATION_OFFSET) == FOUND_SESSION));
 					  } catch(SocketTimeoutException store) {
-						  //down timedout servers
+						 //down timedout servers
 					    for (Integer i : destAddrs)
 					    	vm.addServer(new SimpleServer(i,SimpleServer.status_state.DOWN));
 					  } catch(IOException ioe) {
@@ -106,15 +111,15 @@ public abstract class SessionFetcher {
 			return sessionFetched;
 	}
 	/**
-	 * Write a session
+	 * Write a session to remote servers
 	 * @param session
-	 * @param destAddrs
+	 * @param destAddrs -- preferred addresses (probably places where the session was already written)
 	 * @param callID
 	 * @param vm
-	 * @return ArrrayList of the session ids stored in
-	 * @throws UnknownHostException
+	 * @return ArrrayList of the serverIDs the session was stored in
+	 * 
 	 */
-	public static ArrayList<Integer> writeSession(SimpleEntry session, ArrayList<Integer> destAddrs, int callID, ViewManager vm) throws UnknownHostException{
+	public static ArrayList<Integer> writeSession(SimpleEntry session, ArrayList<Integer> destAddrs, int callID, ViewManager vm) {
 		ByteBuffer request = ByteBuffer.allocate(MAX_BYTES_FOR_UDP);
 		request.putInt(CALL_ID_OFFSET, callID);
 		request.put(OPERATION_OFFSET, WRITE);
@@ -132,23 +137,27 @@ public abstract class SessionFetcher {
 		List<InetAddress> stored = new ArrayList<InetAddress>();
 		//determine how many servers to check at once
 		int numServersToTryPerRound =  (int) ((SessionHandler.K - stored.size())* FACTOR_TO_CHECK + .999);
+		//add preffered addresses
 		for (int i = 0; i < destAddrs.size(); i++){
-			//try if up
+			//try if up, if not self
 			if (destAddrs.get(i).intValue() != vm.localAddress && vm.getStatus(destAddrs.get(i)) == SimpleServer.status_state.UP ){
-				tryThisRound.add(SimpleServer.intToInet(destAddrs.get(i)));
+				try {
+					tryThisRound.add(SimpleServer.intToInet(destAddrs.get(i)));
+				} catch (UnknownHostException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		
 		DatagramSocket rpcSocket;
-		
 		//send
 		try {
 			rpcSocket = new DatagramSocket();
 			rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
+			
 			do{
-				
 				numServersToTryPerRound =  (int) ((SessionHandler.K - stored.size())* FACTOR_TO_CHECK + .999);
-				//repopulae tryThisRound if needed
+				//repopulate servers to tryThisRound if needed
 				while (tryThisRound.size() < numServersToTryPerRound  && servers.hasMoreElements()){
 					
 					SimpleServer nextServer = servers.nextElement();
@@ -229,7 +238,7 @@ public abstract class SessionFetcher {
 	}
 	
 	/**
-	 * Mergers sessions by intiating UDP
+	 * Mergers sessions by intiating a UDP packet. Method is limited to 38 servers
 	 * @param vm
 	 * @param s server to gossip with
 	 */
@@ -241,6 +250,7 @@ public abstract class SessionFetcher {
 				&& vm.hasUpServers()){ 
 			s = vm.getAServer();
 		}
+		//if there are no servers to gossip with
 		if (s == null){
 			return;
 		}
@@ -289,9 +299,4 @@ public abstract class SessionFetcher {
 		}
 	}
 			
-			
-		
-	
-
-
 }

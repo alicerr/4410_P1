@@ -5,15 +5,12 @@ package ARR233;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
-
-//used http://stackoverflow.com/questions/15729367/how-to-make-thread-safe-hashmap-without-locking-get-method
-
 /**
  * A session table using a concurrency hashmap that implements read and write locks (based on my understanding of the docs)
  * Should be initialized by a listener that will clear the table after a given time of sessions expired 
  * after some amount of time
  * 
- * @author Alice (arr233)
+ * @author Alice/Spencer (arr233)
  *
  */
 public class SessionTable implements Runnable {
@@ -27,8 +24,6 @@ public class SessionTable implements Runnable {
      * @return the session if found, otherwise null
      */
     public SimpleEntry get(long id){
-    	//System.out.println("table size:" + table.size());
-    	//System.out.println("id: " + id);
     	return table.get(id);
     }
     /**
@@ -39,12 +34,11 @@ public class SessionTable implements Runnable {
     public boolean put(SimpleEntry session){
     	SimpleEntry oldEntry = table.putIfAbsent(session.sid, session);
     	boolean success = oldEntry == null;
-    	//System.out.println(oldEntry);
-    	//System.out.println(table.get(session.sid));
     	if (!success){
     		boolean outdated = false;
+    		//we will try to replace the session until we are outdated or successful
     		while (!outdated && !success){
-    			//you can't un-retire (-1) a session
+    			//you can't un-retire (-1) a session, or replace it with an version that isn't newer
     			outdated = (oldEntry.vn >= session.vn || oldEntry.vn == -1) && session.vn > -1;  
     			if (!outdated){
     				success = table.replace(session.sid, oldEntry, session);
@@ -89,6 +83,9 @@ public class SessionTable implements Runnable {
 		long removed = removeOldEntries();
 		System.out.println("Table Update complete, # sessions removed: " + removed);
 	}
+	/**
+	 * Prints session table, used for debugging
+	 */
 	public String toString(){
 		String s = "Session Table Contents:\n";
 		Enumeration<SimpleEntry> e = table.elements();

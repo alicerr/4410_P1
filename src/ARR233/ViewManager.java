@@ -7,7 +7,9 @@ import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentLinkedQueue;
-public class ViewManager  implements Runnable {
+
+import ARR233.SimpleServer.status_state;
+public class ViewManager  {
 
 	private ConcurrentHashMap<Integer, SimpleServer> servers = new ConcurrentHashMap<Integer, SimpleServer>();
 	public final int localAddress;
@@ -42,14 +44,12 @@ public class ViewManager  implements Runnable {
 	 * @return
 	 */
 	public boolean addServer(SimpleServer newServer){
-		//TODO avoid adding local address
-		// I commented this out because the a server should have it's own info in
-		// the viewManager. 
-		/**if (newServer.serverID == localAddress){
-			**return false;
-		}**/
 		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
 		boolean success = oldServer == null;
+		//if someone has declared this server dead then declare it back alive
+		if (localAddress == newServer.serverID && newServer.status == status_state.DOWN){
+			newServer = new SimpleServer(localAddress);
+		}
 		if (success){
 			size.incrementAndGet();
 			serverList.add(newServer.serverID);
@@ -58,16 +58,18 @@ public class ViewManager  implements Runnable {
 			}
 		} else {
 			boolean outdated = false;
-			// I think this is the logic we want
-			//while (!outdated && !success){
+			while (!outdated && !success){	
 				
-				outdated = oldServer.time_observed <= newServer.time_observed;
-				if(outdated) { // if oldServer is outdated AKA (oldTime <= newTime)
+				//has the server we are trying to insert been outdated?
+				outdated = oldServer.time_observed >= newServer.time_observed;
+				if(!outdated) { 
 					// We need to replace
 					success = servers.replace(oldServer.serverID, oldServer, newServer);
 				}
-				//success = servers.replace(newServer.serverID, oldServer, newServer);
-				//oldServer = success || outdated ? oldServer : servers.get(newServer.serverID);
+				//if replacment wasn't successful because someone else has updated this 
+				//before we read it well read the new value & try again
+				oldServer = success || outdated ? oldServer : servers.get(newServer.serverID);
+				//if replacment was successful
 				if (success){
 					if (oldServer.status == SimpleServer.status_state.UP && newServer.status == SimpleServer.status_state.DOWN){
 						runningServers.decrementAndGet();
@@ -75,18 +77,29 @@ public class ViewManager  implements Runnable {
 						runningServers.incrementAndGet();
 					}
 				}
-			//}
-			
-				
+			}
 		}
 		return success;
 	}
+	/**
+	 * Number of servers
+	 * @return
+	 */
 	public int size() {
 		return size.get();
 	}
+	/**
+	 * Server enumeration
+	 * @return
+	 */
 	public Enumeration<SimpleServer> getServers() {
 		return servers.elements();
 	}
+	/**
+	 * Merge in another view
+	 * @param o the other view
+	 * @return the number of servers retained from the passed in view
+	 */
 	public int merge(ByteBuffer o){
 		short length = o.getShort(SessionFetcher.MESSAGE_OFFSET);
 		short start = 2 + SessionFetcher.MESSAGE_OFFSET;
@@ -113,7 +126,11 @@ public class ViewManager  implements Runnable {
 		}
 		return addedOrUpdated;
 	}
-	
+	/**
+	 * Just get the status of a specific server
+	 * @param integer serverID
+	 * @return
+	 */
 	public SimpleServer.status_state getStatus(Integer integer) {
 		if (servers.containsKey(integer)){
 			return servers.get(integer).status;
@@ -122,7 +139,11 @@ public class ViewManager  implements Runnable {
 			return SimpleServer.status_state.UP;
 		}
 	}
-	 
+	/**
+	 * Load the servers (up to 38) onto a UDP packet for shipping
+	 * @param b
+	 * @return
+	 */
 	public ByteBuffer getServerSet(ByteBuffer b){
 		Enumeration<SimpleServer> f = servers.elements();
 		short start = SessionFetcher.MESSAGE_OFFSET + 2; //start at index 2
@@ -136,10 +157,10 @@ public class ViewManager  implements Runnable {
 		return b;
 		
 	}
-	@Override
-	public void run() {
-		
-	}
+	/**
+	 * Are there any 'UP' servers? Server is assumed to know that it is up.
+	 * @return
+	 */
 	public boolean hasUpServers() {
 		return runningServers.get() > 1;
 	}
@@ -149,9 +170,10 @@ public class ViewManager  implements Runnable {
 		return servers.get(i);
 		
 	}
-	
+	/**
+	 * 
+	 */
 	public String toString(){
-		
 		String s = "Size: " + size.toString() +", Active size: " + runningServers.toString() + "\n";
 		Enumeration<SimpleServer> e = getServers();
 		while (e.hasMoreElements())

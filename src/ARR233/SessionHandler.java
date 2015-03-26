@@ -24,10 +24,8 @@ import com.google.gson.JsonParser;
 /**
  * Thread Safe Session Handler for Assignment 1a 5300
  * Servlet implementation class SessionHandler
- */
-/**
- * @author Alice (arr233)
- *
+ * 
+ * Prints out the session, session table view, cookie retrieved, server view, etc in DEBUG = true
  */
 @WebServlet("/SessionHandler")
 public class SessionHandler extends HttpServlet {
@@ -94,11 +92,9 @@ public class SessionHandler extends HttpServlet {
 			        		c = cookies[i];
 			        	}
 			        }
-			        //int i = 1;
 			        SimpleEntry session = null;
 			        String erMsg = null;
 			        String sesStateMsg = null;
-			        //System.out.println(i++ + "1");
 			        String cVal = null; //cookie value
 			        ArrayList<Integer> srvs = new ArrayList<Integer>();
 			        if (c != null){
@@ -122,16 +118,16 @@ public class SessionHandler extends HttpServlet {
 			        				isLocal = true;
 			        			}
 			        		}
-			        		
-			        		if (isLocal){ //if found locally
-			        			//System.out.println("looking in local table for cookies");
+			        		//try to get local copy
+			        		if (isLocal){ 
 			        			session = sessions.get(cSessionID);
-			        			//System.out.println("I found this in local table: " + session);
 			        		}
+			        		//try to get remote copy
 			        		if (session == null && srvs.size() > 0){
 			        			System.out.println("checking remote servers");
 			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
-			        		} 
+			        		}
+			        		//no copies available or copy is 'dead'
 			        		if (session == null) {
 			        			erMsg = "Previous Session not found in System! x_x";
 			        		} else if (session.isRetired()) {
@@ -148,7 +144,7 @@ public class SessionHandler extends HttpServlet {
 			        			erMsg = "Error Handling Request, Please Contact: [SysAdmin]";
 			        		}
 			        	}
-				        //System.out.println(i++ + "2");
+			        	//if they want to retire it
 			        	if (request.getParameter("retire") != null && session != null){
 			                session =  new SimpleEntry(session, false);
 			        		sessions.put(session);
@@ -157,71 +153,64 @@ public class SessionHandler extends HttpServlet {
 
 			        		session = null;
 			        		sesStateMsg = "Session Terminated Successfully";
+			        	//they want to update the message or extend the session
 			        	} else if (session != null) { 
 			        		Map<String, String[]> requestMap = request.getParameterMap();
-			        		
+			        		//update message
 			        		if (requestMap.containsKey("replace")){
 			        			session = new SimpleEntry(session, requestMap.get("new_message")[0]);
-			        		} else {
+			        		} else {//extend session
 			        			session = new SimpleEntry(session, true);
 			        		} 
 			        		sessions.put(session);
 			        		srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        		srvs.add(vm.localAddress);
 			        	}
-			        } // end not null cookie
-			        //else {
-			        	//System.out.println("no cookie found");
-			        //}
-
-			       // System.out.println(i++ + "after cookie check");
+			        }
+			        //if we need to generate a new session
 			        if (session == null){
 			        	session = new SimpleEntry(generateSessionID(vm.localAddress));
-			        	//System.out.println("made new session");
 			        	sessions.put(session);
-			        	//System.out.println("stored session");
-			        	//srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        	srvs.add(vm.localAddress);
 			        	sesStateMsg = sesStateMsg == null ? "New Session Started" : sesStateMsg + "; New Session Started";
 			        }
-			        //System.out.println(i++ + "about to make cookie");
-			        
+			        //make the new cookie
 			        Cookie cookie = session.getAsCookie(srvs);
 			        response.addCookie(cookie);
 			        response.setContentType("text/html");
-			        //System.out.println(i++ + "made cookie");
-			        //out.println(cookie);
+			        //general
 			        out.println(HTML_HEADER);
 			        out.println(session.msg);
+			        //form
 			        out.println(FORM_HEADER);
-			        //out.println("    Please include html block elements, images, and formating in message   <br />");
-			        out.println("    <input type=\"text\" name=\"new_message\" value=\"\" >\n<br />");
+			        out.println("    Please include html block elements, images, and formating in message   <br />");
+			        out.println("    <input type=\"text\" name=\"new_message\" value=\"<p> </p>\" >\n<br />");
 			        out.println("    <input type=\"submit\" value=\"Replace Message\" name=\"replace\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Extend Session\" name=\"refresh\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Retire Session\" name=\"retire\" />\n");
-			 
 			        out.println(FORM_FOOTER);
+			        //messages
 			        if (sesStateMsg != null)
 			        	out.println("<p>CURRENT SESSION STATE: "+sesStateMsg+"</p>");
 			        if (erMsg != null)
 			        	out.println("<p>ERROR MESSAGE: "+erMsg+"</p>");
+			        //debug
 			        if (DEBUG) {
-			        	
 			        	out.println("<h2>Debugging Information</h2>");
 			        	out.println("<h4>Current Address: " + vm.localAddress + " / " + SimpleServer.intToInet(vm.localAddress).getHostName() + "</h4>");
 				        for (Integer srv : srvs){
-				        	out.println("<h5>Stored in: " + srv + " / " + SimpleServer.intToInet(srv).getHostAddress());
+				        	out.println("<h5>Stored in: " + srv + " / " + SimpleServer.intToInet(srv).getHostName() );
 				        }
 			        	out.println(session.htmlFormattedDebugMessage());
 			        	if (cVal != null){
 			        		out.println("<p>Retrieved Cookie Value: " + cVal +"</p>");
 			        	}
+			        	out.println("<p>Set Cookie Value: " + cookie.getValue() +"</p>");
 				        out.println("<p>Session Value Retrieved or Created (retrived sessions will show in pre-updated form): </p>");
 				        out.println("<h3>Data in session table:</h3>");
 				        out.println(sessions.toString().replaceAll("\n", " <br> "));
 				        out.println("<h3>View Data:</h3>");
 				        out.println(vm.toString().replaceAll("\n", " <br> "));
-				        	
 			        }
 			        out.println(HTML_FOOTER);
 		        } catch (Exception e){
@@ -233,22 +222,8 @@ public class SessionHandler extends HttpServlet {
 		        
 		    }
 	/**
-	 * 
-	 */
-	public SimpleEntry doGetDatagram(long sessionID){         
-	        	//Retrieve session table
-	   SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
-	   return sessions.get(sessionID);	        
-	}
-	/**
-	 * 
-	 */
-	public boolean doPutDatagram(SimpleEntry session){      
-	   //Retrieve session table
-	   SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
-	   return sessions.put(session);	        
-	}
-	/**
+	 * Generates a unique session ID by combining the 4 bytes of the serverID and 
+	 * A 4 byte session ID. Session ID rolls over
 	 * @return
 	 */
 	private static long generateSessionID(int localServerId) {
@@ -258,6 +233,10 @@ public class SessionHandler extends HttpServlet {
 		hold.putInt(4, inServerId);
 		return hold.getLong(0);
 	}
+	/**
+	 * Generate a unique call id. Rollsover
+	 * @return
+	 */
 	public static int generateCallID() {
 		return SESSION_CALL_GEN.getAndIncrement();
 	}

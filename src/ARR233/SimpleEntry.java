@@ -177,7 +177,8 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
      * @return A HTML formatted version of toString for debugging
      */
     public String htmlFormattedDebugMessage(){
-    	return "<p>" + "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp) + " MSG(Below):</p>" + msg;
+    	String minimsg = msg.length() > 10 ? msg.substring(0, 10): msg;
+    	return "<p>" + "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp) + " MSG: " + minimsg + "</p>";
     }
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)

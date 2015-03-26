@@ -43,6 +43,7 @@ public class SessionServerThread extends Thread {
                 //ops
                 if (opCode == SessionFetcher.WRITE){
                 	SimpleEntry session = new SimpleEntry(data); 
+                	System.out.println("Stored " + session  + " from " + packet.getAddress());
                 	boolean success = sessions.put(session);
                 	if (success){
                 		response.put(SessionFetcher.OPERATION_OFFSET, SessionFetcher.STORED_SESSION);
@@ -56,7 +57,7 @@ public class SessionServerThread extends Thread {
                 	long sessionID = data.getLong(SessionFetcher.MESSAGE_OFFSET);
                 	
                 	SimpleEntry session = sessions.get(sessionID);
-                	
+                	System.out.println("Sent in " + session  + " to " + packet.getAddress());
                 	if (session != null){
                 		response.put(SessionFetcher.OPERATION_OFFSET, SessionFetcher.FOUND_SESSION);
                 		session.fillBufferForUDP(response);

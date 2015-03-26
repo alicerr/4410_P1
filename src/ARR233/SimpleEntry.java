@@ -37,7 +37,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	/**
 	 * The name of the cookie
 	 */
-	public static final String COOKIE_NAME = "CS5300_A1_ARRSP_SP2015";
+	public static final String COOKIE_NAME = "CS5300_A1_ARRSHS_SP2015";
 	/**
 	 * Session ID, assumed to be unique to servlet per session
 	 */

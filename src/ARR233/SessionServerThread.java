@@ -8,7 +8,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
  /**
   * Listener class 
-  * @author Alice/sPENCER
+  * @author Alice/Spencer
   *
   */
 public class SessionServerThread extends Thread {

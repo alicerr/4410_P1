@@ -44,6 +44,9 @@ public class ViewManager  {
 	 * @return
 	 */
 	public boolean addServer(SimpleServer newServer){
+		if(newServer.serverID == 0) { // We never should add the null server to a view
+			return false;
+		}
 		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
 		boolean success = oldServer == null;
 		//if someone has declared this server dead then declare it back alive
@@ -67,7 +70,7 @@ public class ViewManager  {
 					success = servers.replace(oldServer.serverID, oldServer, newServer);
 				}
 				//if replacment wasn't successful because someone else has updated this 
-				//before we read it well read the new value & try again
+				//before we read it we'll read the new value & try again
 				oldServer = success || outdated ? oldServer : servers.get(newServer.serverID);
 				//if replacment was successful
 				if (success){

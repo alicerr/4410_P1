@@ -54,7 +54,7 @@ public abstract class SessionFetcher {
 	 * @param vm
 	 * @return SimpleEntry session or null if not retrieved
 	 */
-	public static SimpleEntry fetchSession(int callID, long sessionID, List<Integer> destAddrs, ViewManager vm){
+	public static SimpleEntry fetchSession(int callID, long sessionID, List<Integer> destAddrs, ViewManager vm, int respSrvID){
 			//build packet
 			ByteBuffer request = ByteBuffer.allocate(13);
 			request.putInt(CALL_ID_OFFSET, callID);
@@ -64,16 +64,22 @@ public abstract class SessionFetcher {
 			//send requests
 			DatagramSocket rpcSocket;				
 			SimpleEntry sessionFetched = null;
+			int packetsSent = 0;
 			try {
 				rpcSocket = new DatagramSocket();
 				rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
 				//try all dest addresses
 				for(Integer destAddr : destAddrs ) {
-					if (destAddr.intValue() != vm.localAddress){
+					if (destAddr.intValue() != vm.localAddress && destAddr.intValue() != 0){
 						InetAddress destAddrInet = SimpleServer.intToInet(destAddr);
 					    DatagramPacket sendPkt = new DatagramPacket(requestMessage, requestMessage.length, destAddrInet, portProj1bRPC);
 					    rpcSocket.send(sendPkt);
+					    packetsSent++;
 					}
+				}
+				if(packetsSent == 0) {
+					rpcSocket.close();
+					return null;
 				}
 				//collect first response
 				byte [] inBuf = new byte[512];
@@ -94,7 +100,8 @@ public abstract class SessionFetcher {
 						  } catch(SocketTimeoutException store) {
 							 //down timedout servers
 						    for (Integer i : destAddrs)
-						    	vm.addServer(new SimpleServer(i,SimpleServer.status_state.DOWN));
+						    	if(i != 0) // We do not want to add the null server
+						    		vm.addServer(new SimpleServer(i,SimpleServer.status_state.DOWN));
 						  } catch(IOException ioe) {
 							  if (!firstIOE) firstIOE = true;
 							  else firstIOE = false;
@@ -106,6 +113,7 @@ public abstract class SessionFetcher {
 				if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == FOUND_SESSION))
 					try {
 						sessionFetched = new SimpleEntry(ByteBuffer.wrap(recvPkt.getData()));
+						respSrvID = SimpleServer.inetToInt(recvPkt.getAddress());
 					} catch (Exception e){
 						e.printStackTrace();
 					}			
@@ -147,8 +155,8 @@ public abstract class SessionFetcher {
 		int numServersToTryPerRound =  (int) ((SessionHandler.K - stored.size())* FACTOR_TO_CHECK + .999);
 		//add preffered addresses
 		for (int i = 0; i < destAddrs.size(); i++){
-			//try if up, if not self
-			if (destAddrs.get(i).intValue() != vm.localAddress && vm.getStatus(destAddrs.get(i)) == SimpleServer.status_state.UP ){
+			//try if up, if not self, if not null server
+			if (destAddrs.get(i).intValue() != vm.localAddress && vm.getStatus(destAddrs.get(i)) == SimpleServer.status_state.UP && destAddrs.get(i).intValue() != 0){
 				try {
 					tryThisRound.add(SimpleServer.intToInet(destAddrs.get(i)));
 				} catch (UnknownHostException e) {
@@ -164,7 +172,7 @@ public abstract class SessionFetcher {
 			try {
 				rpcSocket = new DatagramSocket();
 				rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
-				
+				int timeoutCount = 0;
 				do{
 					numServersToTryPerRound =  (int) ((SessionHandler.K - stored.size())* FACTOR_TO_CHECK + .999);
 					//repopulate servers to tryThisRound if needed
@@ -186,6 +194,7 @@ public abstract class SessionFetcher {
 					DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 					
 					boolean firstIOE = false;
+										
 					do{
 						try {
 							do {
@@ -207,6 +216,8 @@ public abstract class SessionFetcher {
 							      }
 							    } while( stored.size() < SessionHandler.K && tryThisRound.size() > 0); 
 							  } catch(SocketTimeoutException store) {
+								  System.out.println("Timed out connection: SessionFetcher:WriteSession");
+								  timeoutCount++;
 							    for (InetAddress failure : tryThisRound) 
 							    	vm.addServer(new SimpleServer(failure, new Date().getTime(), SimpleServer.status_state.DOWN));
 							  } catch(IOException ioe) {
@@ -215,7 +226,7 @@ public abstract class SessionFetcher {
 								  	else firstIOE = false;
 							  }
 						} while(firstIOE);
-				} while (stored.size() < SessionHandler.K && servers.hasMoreElements());
+				} while (stored.size() < SessionHandler.K && servers.hasMoreElements() && timeoutCount > 4);
 				rpcSocket.close();
 			} catch (SocketException e1) {
 				e1.printStackTrace();

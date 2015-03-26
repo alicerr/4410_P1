@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Should be initialized by a listener that will clear the table after a given time of sessions expired 
  * after some amount of time
  * 
- * @author Alice/Spencer (arr233)
+ * @author Alice (arr233)/Spencer (shs257)
  *
  */
 public class SessionTable implements Runnable {

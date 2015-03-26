@@ -4,7 +4,7 @@ import java.util.Enumeration;
 import java.util.Random;
 
 public class GossipService extends Thread {
-	public static final int GOSSIP_SECS = 20000;
+	public static final int GOSSIP_SECS = 30000;
 	private ViewManager vm;
 	
 	public GossipService(ViewManager vim) {
@@ -35,7 +35,7 @@ public class GossipService extends Thread {
 				while(serverEnum.hasMoreElements()) {
 					theLuckyOne = serverEnum.nextElement();
 					// Check that we are at the 'randomly' chosen server AND it is believed to be UP
-					if(i >= serverToGossip && theLuckyOne.status == SimpleServer.status_state.UP){
+					if(i >= serverToGossip && theLuckyOne.status == SimpleServer.status_state.UP && theLuckyOne.serverID != vm.localAddress){
 						break;
 					}
 					i++;

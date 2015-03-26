@@ -16,6 +16,9 @@ public class Tests extends SessionFetcher{
 	
 	public static void main(String[] args) throws Exception {
 		
+		int numServersToTryPerRound =  (int) ((SessionHandler.K - 0)* 1.5 + .999);
+		System.out.println(numServersToTryPerRound);
+		
 		ipAddr = getMyIP();
 		System.out.println(ipAddr);
 		//WhatIsInTheDB();

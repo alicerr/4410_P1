@@ -97,6 +97,7 @@ public class SessionHandler extends HttpServlet {
 			        String sesStateMsg = null;
 			        String cVal = null; //cookie value
 			        ArrayList<Integer> srvs = new ArrayList<Integer>();
+			        int respondingServerID = -1;
 			        if (c != null){
 			        	System.out.println("found cookie");
 			        	//get cookie info
@@ -113,7 +114,8 @@ public class SessionHandler extends HttpServlet {
 			        			
 			        			if (serverID != vm.localAddress){
 			        				srvs.add(js.getAsInt());
-			        				vm.addServer(new SimpleServer(js.getAsInt()));
+			        				// CHeck this - do we add here
+			        				//vm.addServer(new SimpleServer(js.getAsInt()));
 			        			} else {
 			        				isLocal = true;
 			        			}
@@ -121,15 +123,18 @@ public class SessionHandler extends HttpServlet {
 			        		//try to get local copy
 			        		if (isLocal){ 
 			        			session = sessions.get(cSessionID);
+			        			respondingServerID = vm.localAddress;
 			        		}
 			        		//try to get remote copy
 			        		if (session == null && srvs.size() > 0){
 			        			System.out.println("checking remote servers");
-			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
+			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm, respondingServerID);
 			        		}
 			        		//no copies available or copy is 'dead'
 			        		if (session == null) {
 			        			erMsg = "Previous Session not found in System! x_x";
+			        			// Reset srvs in the case when old cookie was found from previous server run
+			        			srvs = new ArrayList<Integer>();
 			        		} else if (session.isRetired()) {
 			        			erMsg = "Session was already terminated! x_x";
 			        			c = null;
@@ -163,8 +168,10 @@ public class SessionHandler extends HttpServlet {
 			        			session = new SimpleEntry(session, true);
 			        		} 
 			        		sessions.put(session);
-			        		srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
+			        		srvs  = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        		srvs.add(vm.localAddress);
+			        		// Ensure we keep K-resiient (1)
+			        		srvs = manageSrvs(srvs,vm);
 			        	}
 			        }
 			        //if we need to generate a new session
@@ -172,6 +179,11 @@ public class SessionHandler extends HttpServlet {
 			        	session = new SimpleEntry(generateSessionID(vm.localAddress));
 			        	sessions.put(session);
 			        	srvs.add(vm.localAddress);
+			        	
+			        	// we need this to be 1-resilient - if possible
+			        	// at some point maybe K
+			        	srvs = manageSrvs(srvs, vm);		        	
+			        	
 			        	sesStateMsg = sesStateMsg == null ? "New Session Started" : sesStateMsg + "; New Session Started";
 			        }
 			        //make the new cookie
@@ -194,12 +206,18 @@ public class SessionHandler extends HttpServlet {
 			        	out.println("<p>CURRENT SESSION STATE: "+sesStateMsg+"</p>");
 			        if (erMsg != null)
 			        	out.println("<p>ERROR MESSAGE: "+erMsg+"</p>");
+			        out.println("<h4>Server Executing Request: " + vm.localAddress + " / " + SimpleServer.intToInet(vm.localAddress).getHostName() + "</h4>");
+			        if(respondingServerID == -1){
+			        	out.println("<h4>Session Data Found: Nowhere, this is a new session</h4>");
+			        } else {
+			        	out.println("<h4>Session Data Found: " + respondingServerID + " / " + SimpleServer.intToInet(respondingServerID).getHostName() + "</h4>");
+			        }
 			        //debug
 			        if (DEBUG) {
-			        	out.println("<h2>Debugging Information</h2>");
-			        	out.println("<h4>Current Address: " + vm.localAddress + " / " + SimpleServer.intToInet(vm.localAddress).getHostName() + "</h4>");
+			        	out.println("<h2>Debugging Information</h2>");	
 				        for (Integer srv : srvs){
-				        	out.println("<h5>Stored in: " + srv + " / " + SimpleServer.intToInet(srv).getHostName() );
+				        	if(srv != 0)
+				        		out.println("<h5>Stored in: " + srv + " / " + SimpleServer.intToInet(srv).getHostName() );
 				        }
 			        	out.println(session.htmlFormattedDebugMessage());
 			        	if (cVal != null){
@@ -246,6 +264,46 @@ public class SessionHandler extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);
+	}
+	
+	/**
+	 * Manages the server put in the cookie
+	 * @param srvs 
+	 * @param vm
+	 * @return
+	 */
+	public static ArrayList<Integer> manageSrvs(ArrayList<Integer> srvs, ViewManager vm) {
+		if(srvs.size() == (K+1)){ // WE have the right amount of servers for our cookie
+			return srvs;
+		}
+		
+		if(vm.size() > K && vm.hasUpServers()) { // by default K is set to 1
+			SimpleServer backup = null;
+			do { // get a server that is not local
+				backup = vm.getAServer();
+			} while(backup.serverID == vm.localAddress && backup.status == SimpleServer.status_state.UP);
+			
+			srvs.add(backup.serverID);
+		} else { // enter null server
+			System.out.println("Added null server to cookie: srvs size: " + srvs.size() + " VM size: " + vm.size());
+			srvs.add(0);
+		} 
+		if(srvs.size() > (K+1)) { // several were returned from writeSessions, but the cookie only needs one + local
+			int srvsNeeded = K+1;
+			ArrayList<Integer> newSrvs = new ArrayList<Integer>();
+			newSrvs.add(vm.localAddress);
+			for(int srv:srvs) {
+				//add non local addresses until
+				if(srv != vm.localAddress) {
+					newSrvs.add(srv);
+				} 
+				if(newSrvs.size() == srvsNeeded){
+					break;
+				}
+			}
+			return newSrvs;
+		}
+		return srvs;
 	}
 
 }

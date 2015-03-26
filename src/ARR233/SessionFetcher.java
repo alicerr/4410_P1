@@ -55,7 +55,6 @@ public abstract class SessionFetcher {
 	 * @return SimpleEntry session or null if not retrieved
 	 */
 	public static SimpleEntry fetchSession(int callID, long sessionID, List<Integer> destAddrs, ViewManager vm){
-			if (!vm.hasUpServers()) return null;
 			//build packet
 			ByteBuffer request = ByteBuffer.allocate(13);
 			request.putInt(CALL_ID_OFFSET, callID);

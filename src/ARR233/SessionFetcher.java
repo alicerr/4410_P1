@@ -202,10 +202,13 @@ public abstract class SessionFetcher {
  					      }
  					    } while( stored.size() < SessionHandler.K && tryThisRound.size() > 0); 
  					  } catch(SocketTimeoutException store) {
- 					    for (InetAddress failure : tryThisRound) 
+ 					    for (InetAddress failure : tryThisRound) {
  					    	vm.addServer(new SimpleServer(failure, new Date().getTime(), SimpleServer.status_state.DOWN));
+ 					    	tryThisRound.remove(failure);
+ 					    }
  					  } catch(IOException ioe) {
  						  	ioe.printStackTrace();
+ 						  	tryThisRound = new ArrayList<InetAddress>();
  					  }
  			} while (stored.size() < SessionHandler.K && servers.hasMoreElements());
  			rpcSocket.close();

@@ -1,0 +1,81 @@
+%%% Research Diary - Entry
+%%% Template by Mikhail Klassen, April 2013
+%%% 
+\documentclass[11pt,letterpaper]{article}
+
+\newcommand{\workingDate}{\textsc{2015 $|$ March $|$ 26}}
+\newcommand{\userName}{Alice Renegar \& Spencer Steel}
+\newcommand{\institution}{Assignment 1}
+\usepackage{rrr}
+\usepackage{amssymb}
+% To add your univeristy logo to the upper right, simply
+% upload a file named "logo.png" using the files menu above.
+\title{Project 1b: Scalable and Available Website}
+\author{Alice Renegar arr233 \\ Spencer Steel shs257}
+\begin{document}
+\univlogo
+{\let\newpage\relax\maketitle}
+
+\section{Solution Structure}
+\subsection{Session Structure}
+\bb{Session IDS} consist of a \texttt{long sid = <serverID, sessID>} where \texttt{sessID} is locally unique to the server the session was created on and the \texttt{serverID} is the integer representation of the IPV4 address. These two 4 byte integers are concatenated into an 8 byte long.
+\\
+\\
+Sessions also contain a \bb{version number} \texttt{VN} where each \texttt{VN} increases. \texttt{VN} rolls over to 0 after \cd{MAX\_INT}. A version number of -1 indicates a retired session. No non-retired session may replace a session with a higher or equal version number or a retired session, and all retired sessions are considered equal. This is considered sufficient for this assignment.
+\\
+\\
+The last two variables in a session are \bb{exp}, the expiration time in milliseconds, and the message which can be up to 485 characters in the ASCII range (with some limits set by \cd{OWASP} for security). This is somewhat defined by UDP size (we could have fit an additional 69 characters by reducing each to the 7 bit ASCII value, but we thought 485 was enough.
+\\
+\\
+Messages can include \cd{img} links and other elements for fun, within reason (\cd{OWASP sanitized}).
+\subsection{Cookie Structure}
+The cookie structure is done with \cd{JSON} for code and cookie readability. For a practical application the values of the cookie would be encoded with a higher base and using deliminators instead of labels, for space. There is no distinction between primary and backup servers, the local server is always tried first if it appears. The retrieved cookie is assumed to be at least the version number in the cookie. The version number in the cookie is used to debug. It would be removed in a 'real' application.
+
+\subsection{RPC Message Structure}
+We have three main message request types \cd{read, write, and merge}. \cd{Read} and \cd{write} are initiated by client connections and are used to fetch and store sessions in remote servers respectively. Both calls favor servers where the session was previously stored, but both over request and take the first response. After 3 seconds without a response the calls time out and servers are set to \cd{DOWN}. We chose to implement the project this way to make it fast, at the cost of efficiency. However with insufficient servers this extra traffic would slow the system down. We did not anticipate that we would generate much traffic.
+\\
+\\
+\cd{UDP} messages are represented as a \cd{< callID int, operationCode byte, message>}. The operation code can be a request (\cd{READ, WRITE, MERGE VIEWS} or a response (\cd{FOUND SESSION, SESSION NOT FOUND, STORED SESSION, NEWER VERSION IN TABLE, MERGE VIEW RESPONSE}). 
+\\
+\\
+Depending on the operation code the messages appended to the \cd{UDP} packets are as follows:
+\begin{enumerate}
+\item \cd{READ: <sessionID long>}
+\item \cd{WRITE: <sessionID long, exp long, vn int, msg length short, msg >}
+\item \cd{MERGE VIEWS: <length short, <serverID int, time long, status byte> list>}
+\item \cd{FOUND SESSION: <sessionID long, exp long, vn int, msg length short, msg >}
+\item \cd{SESSION NOT FOUND: <>}
+\item \cd{STORED SESSION: <>}
+\item \cd{NEWER VERSION IN TABLE: <>} The session data wont be needed by the server anymore, so we don't return information about the new version
+\item \cd{MERGE VIEW RESPONSE: <length short, <serverID int, time long, status byte> list>} This can hold up to 38 servers, but prioritizes severs that are \cd{UP}. We did not anticipate having more than 38 active servers.
+\end{enumerate}
+\\
+\\
+\subsection{Session Expiration Guarantees}
+Sessions are guaranteed for an hour, which is sufficient for a 'fake' application.
+\\
+\\
+\bb{Delta:} because sessions received via UDP are not given a new expiration time we need to primarily worry about the \cd{UDP} response time during reads (sent in parallel) in delta. This is anticipated to be 3 seconds maximum, with an additional 50 milliseconds to reach the point of the code where the expiration timeout is checked and for system clock alignment.
+\subsection{Expired Session Collection}
+Garbage collection is done once every 5 minutes, in an effort to test code. If this were in use we would set it to once a day. It is a background task.
+\subsection{Debugging Output to Hosted Page}
+Much of this output reduces parallelism by read-locking portions of tables. Set \cd{DEBUG} to false in the session handler to remove this.
+
+\end{enumerate} 
+\subsection{Implementation breakdown}
+TODO: class list \& 1 line overviews here
+\\TODO: generate javadocs
+\\ \bi{for further details please see javadocs included at: PATH STRUCTURE HERE}
+
+\section{AWS Elastic Beanstalk}
+
+\subsection{Setup Procedure}
+
+\subsection{Testing Resiliency}
+
+\section{Explanations}
+
+\subsection{SimpleDB Races}
+
+
+\end{document}

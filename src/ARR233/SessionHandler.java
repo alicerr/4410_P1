@@ -129,8 +129,7 @@ public class SessionHandler extends HttpServlet {
 			        			System.out.println("looking in local table for cookies");
 			        			session = sessions.get(cSessionID);
 			        			System.out.println("I found this in local table: " + session);
-			        		} 
-			        		//srvs.add(vm.localAddress);
+			        		}
 			        		if (session == null && srvs.size() > 0){
 			        			System.out.println("checking remote servers");
 			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
@@ -203,6 +202,7 @@ public class SessionHandler extends HttpServlet {
 			        out.println("    <input type=\"submit\" value=\"Extend Session\" name=\"refresh\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Retire Session\" name=\"retire\" />\n");
 			        out.println(vm.toString().replaceAll("\n", " <br> "));
+			        out.println(vm.localAddress);
 			        out.println(FORM_FOOTER);
 			        if (sesStateMsg != null)
 			        	out.println("<p>CURRENT SESSION STATE: "+sesStateMsg+"</p>");

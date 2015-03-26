@@ -227,6 +227,9 @@ public abstract class SessionFetcher {
 	 */
 	public static void sessionMergerDB(ViewManager vm) {
 		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		if (!dbhandle.dbNotNull())
+			dbhandle = new SimpleDBHandler("C:\\Users\\Alice\\Google Drive\\New folder\\Assignment1A\\AwsCredentials.properties");
+		
 		dbhandle.createDomain(DB_DOMAIN);
 		ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
 		vm.merge(dbvm);

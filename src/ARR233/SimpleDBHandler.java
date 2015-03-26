@@ -26,12 +26,12 @@ public class SimpleDBHandler {
 	public SimpleDBHandler(String credentialsFile) {
 		this.connectToAccount(credentialsFile);
 	}
-	
+	public boolean dbNotNull(){ return db != null; }
 	public boolean connectToAccount(String credentialsFile){
 		boolean success = false;
 		System.out.println(credentialsFile);
 		try {
-			InputStream is = SimpleDBHandler.class.getResourceAsStream(credentialsFile);
+			InputStream is = new FileInputStream(credentialsFile);
 			System.out.println(is);
 			db = new AmazonSimpleDBClient(new PropertiesCredentials(is));
 		} catch (IOException e) {

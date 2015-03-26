@@ -81,6 +81,7 @@ public class SessionHandler extends HttpServlet {
 		    { 
                 PrintWriter out = response.getWriter();
 		        System.out.println("cookie");
+		        out.println("here");
 		        try{
 		        	//Retrieve session table
 		        	SessionTable sessions = (SessionTable)getServletContext().getAttribute("sessions");
@@ -214,6 +215,7 @@ public class SessionHandler extends HttpServlet {
 			        		out.println("<p>Retrieved Cookie Value: " + cVal +"</p>");
 			        	}
 			        	out.println("<p>Session Value Retrieved or Created (retrived sessions will show in pre-updated form): </p>");
+			        	out.println(sessions.toString().replaceAll("\n", " <br> "));
 			        	out.println(session.htmlFormattedDebugMessage());
 			        }
 			        out.println(HTML_FOOTER);

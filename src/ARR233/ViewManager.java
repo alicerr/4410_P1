@@ -141,7 +141,7 @@ public class ViewManager  implements Runnable {
 		
 	}
 	public boolean hasUpServers() {
-		return runningServers.get() > 0;
+		return runningServers.get() > 1;
 	}
 	public SimpleServer getAServer(){
 		int i = serverList.remove();
@@ -151,10 +151,11 @@ public class ViewManager  implements Runnable {
 	}
 	
 	public String toString(){
-		String s = "Size: " + size +", Active size: " + runningServers + "\n";
+		
+		String s = "Size: " + size.toString() +", Active size: " + runningServers.toString() + "\n";
 		Enumeration<SimpleServer> e = getServers();
 		while (e.hasMoreElements())
-			s += e.toString() + "\n";
+			s += e.nextElement().toString() + "\n";
 		return s;
 	}
 	

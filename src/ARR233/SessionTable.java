@@ -91,6 +91,15 @@ public class SessionTable implements Runnable {
 		long removed = removeOldEntries();
 		System.out.println("Table Update complete, # sessions removed: " + removed);
 	}
+	
+	public String toString(){
+		String s = "Session Table Contents:\n";
+		Enumeration<SimpleEntry> e = table.elements();
+		while (e.hasMoreElements()){
+			s += e.nextElement().toString() + "\n";
+		}
+		return s;
+	}
 
 
     

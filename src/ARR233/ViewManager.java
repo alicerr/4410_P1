@@ -44,12 +44,12 @@ public class ViewManager  {
 	 * @return
 	 */
 	public boolean addServer(SimpleServer newServer){
-		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
-		boolean success = oldServer == null;
 		//if someone has declared this server dead then declare it back alive
 		if (localAddress == newServer.serverID && newServer.status == status_state.DOWN){
 			newServer = new SimpleServer(localAddress);
 		}
+		SimpleServer oldServer = servers.putIfAbsent(newServer.serverID, newServer);
+		boolean success = oldServer == null;
 		if (success){
 			size.incrementAndGet();
 			serverList.add(newServer.serverID);

@@ -56,7 +56,7 @@ public abstract class SessionFetcher {
 	 */
 	public static SimpleEntry fetchSession(int callID, long sessionID, List<Integer> destAddrs, ViewManager vm){
 			//build packet
-			ByteBuffer request = ByteBuffer.allocate(13);
+			ByteBuffer request = ByteBuffer.allocate(MAX_BYTES_FOR_UDP);
 			request.putInt(CALL_ID_OFFSET, callID);
 			request.put(OPERATION_OFFSET, READ);
 			request.putLong(MESSAGE_OFFSET, sessionID); //session id is the message
@@ -85,7 +85,6 @@ public abstract class SessionFetcher {
  					      recvPkt.setLength(inBuf.length);
  					      rpcSocket.receive(recvPkt);
  					      vm.addServer(new SimpleServer(recvPkt.getAddress()));
- 					      
  					      data = ByteBuffer.wrap(recvPkt.getData());
  					      if (data.getInt(CALL_ID_OFFSET) == callID)
  					    	  destAddrs.remove(recvPkt.getAddress()); //this server is alive at least 
@@ -190,9 +189,10 @@ public abstract class SessionFetcher {
  					      rpcSocket.receive(recvPkt);
  					      ByteBuffer response = ByteBuffer.wrap(recvPkt.getData());
  					      //check callID
+ 					      InetAddress recievedIP = recvPkt.getAddress();
+ 					      vm.addServer(new SimpleServer(recievedIP));
  					      if (response.getInt(CALL_ID_OFFSET) == callID){
- 					    	  InetAddress recievedIP = recvPkt.getAddress();
- 					    	  vm.addServer(new SimpleServer(recievedIP));
+ 					    	  
  				    		  //server is working
  				    	  	  tryThisRound.remove(recievedIP);
  					    	  byte operationPerformed = response.get(OPERATION_OFFSET);
@@ -292,7 +292,8 @@ public abstract class SessionFetcher {
 						  //get merged views from other server
 					      recvPkt.setLength(inBuf.length);
 					      rpcSocket.receive(recvPkt);
-					      
+						  vm.addServer(new SimpleServer(s.serverID));
+
 					    } while(ByteBuffer.wrap(recvPkt.getData()).getInt(CALL_ID_OFFSET) != callID);
 				  } catch(SocketTimeoutException store) {
 					System.out.println("Server timeout: " + s);

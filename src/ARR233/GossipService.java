@@ -23,8 +23,8 @@ public class GossipService extends Thread {
 			int serverToGossip = generator.nextInt(numServers+1);
 			
 			if(serverToGossip == numServers) { // lets chat with the DB
-				//SessionFetcher.sessionMergerDB(vm);
-				//System.out.println("Gossiping with database");
+				SessionFetcher.sessionMergerDB(vm);
+				System.out.println("Gossiping with database");
 				
 				
 			} else { // pick a random server

@@ -58,7 +58,7 @@ public class SessionTableHandler implements ServletContextListener {
 				IP = InetAddress.getLocalHost();
 				vm = new ViewManager(SimpleServer.inetToInt(IP));
 				//TODO get amavon IP
-
+				
 				// Connect to SimpleDB and get all Views. Merge them. 
 				SessionFetcher.sessionMergerDB(vm);
 				

@@ -30,13 +30,13 @@ public class Tests extends SessionFetcher{
 	}
 
 	private static void TestDeleteDomain() {
-		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties",false);
 		dbhandle.deleteDomain(domain);
 		System.out.println("Deleted domain");
 	}
 
 	private static SimpleDBHandler setUpDBandDomain() {
-		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties",false);
 		dbhandle.createDomain(domain);
 		/*if(dbhandle.domainExists(domain)) {
 			System.out.println(domain + " already existed.");

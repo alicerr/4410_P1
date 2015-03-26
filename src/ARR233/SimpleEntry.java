@@ -26,6 +26,11 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 */
 	public final static int TTL = 1000 * 60 * 60 * 1;
 	/**
+	 * Time a session is allowed over TTL (millis) in case it had to be remotely retrieved
+	 * Calls time out after 3000 millis, the extra 50 is for 
+	 */
+	public final static int DELTA = 3050;
+	/**
 	 * The most charecters a message can have. Not aqtually straight ASCII but close (8 bits)
 	 */
 	public static final short MAX_MSG_SIZE_ASCII  = (short)(512-MSG_OFFSET);
@@ -133,7 +138,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
      * @return session has expired
      */
     public boolean isExpired(){
-    	return System.currentTimeMillis() > exp;
+    	return System.currentTimeMillis() > exp + DELTA;
     }
 	/**
 	 * A method to clean the session message
@@ -259,6 +264,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * @param c
 	 * @return
 	 */
+	
 	public boolean inRange(char c){
 		return (int)c >= 1 && (int)c <= 255;
 	}

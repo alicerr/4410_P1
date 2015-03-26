@@ -59,11 +59,11 @@ public class SessionTable implements Runnable {
     public long removeOldEntries(){
     	long removed = 0;
     	Enumeration<SimpleEntry> sessions = table.elements();
-    	long removeIfBefore = System.currentTimeMillis() + 3000;
+    	
        	while (sessions.hasMoreElements()){
        		try{
        			SimpleEntry session = sessions.nextElement();
-       			if (session.exp < removeIfBefore ){
+       			if (session.isExpired()){
        				table.remove(session.sid);
        				removed++;
        			}

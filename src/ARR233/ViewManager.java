@@ -59,7 +59,7 @@ public class ViewManager  {
 		} else {
 			boolean outdated = false;
 			while (!outdated && !success){	
-				
+				//TODO test loop
 				//has the server we are trying to insert been outdated?
 				outdated = oldServer.time_observed >= newServer.time_observed;
 				if(!outdated) { 
@@ -147,10 +147,25 @@ public class ViewManager  {
 	public ByteBuffer getServerSet(ByteBuffer b){
 		Enumeration<SimpleServer> f = servers.elements();
 		short start = SessionFetcher.MESSAGE_OFFSET + 2; //start at index 2
+		//add all up elements
 		while(f.hasMoreElements() && start < SessionFetcher.MAX_BYTES_FOR_UDP){
-			byte[] serverAsByteArray = f.nextElement().simpleServerByteArray();
-			for (byte t : serverAsByteArray){
-				b.put(start++, t);
+			SimpleServer s = f.nextElement();
+			if (s.status == SimpleServer.status_state.UP){
+				byte[] serverAsByteArray = s.simpleServerByteArray();
+				for (byte t : serverAsByteArray){
+					b.put(start++, t);
+				}
+			}
+		}
+		f = servers.elements();
+		//add all down servers
+		while(f.hasMoreElements() && start < SessionFetcher.MAX_BYTES_FOR_UDP){
+			SimpleServer s = f.nextElement();
+			if (s.status == SimpleServer.status_state.DOWN){
+				byte[] serverAsByteArray = s.simpleServerByteArray();
+				for (byte t : serverAsByteArray){
+					b.put(start++, t);
+				}
 			}
 		}
 		b.putShort(SessionFetcher.MESSAGE_OFFSET, start);

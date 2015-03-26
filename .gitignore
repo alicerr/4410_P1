@@ -1,9 +1,16 @@
+<<<<<<< HEAD
 build/
+=======
+/build/
+>>>>>>> 89e460a7a261ad9cd0d6ea79fa56de014f98b9c1
 
 #Eclipse project files
 .project
 .classpath
 .settings/
+<<<<<<< HEAD
 
 #AWS keys
 AwsCredentials.properties
+=======
+>>>>>>> 89e460a7a261ad9cd0d6ea79fa56de014f98b9c1

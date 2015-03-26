@@ -23,15 +23,15 @@ import com.amazonaws.services.simpledb.model.SelectRequest;
 public class SimpleDBHandler {
 	private AmazonSimpleDB db;
 	
-	public SimpleDBHandler(String credentialsFile) {
-		this.connectToAccount(credentialsFile);
+	public SimpleDBHandler(String credentialsFile, boolean isAliceComputer) {
+		this.connectToAccount(credentialsFile, isAliceComputer);
 	}
 	public boolean dbNotNull(){ return db != null; }
-	public boolean connectToAccount(String credentialsFile){
+	public boolean connectToAccount(String credentialsFile, boolean isAliceComputer){
 		boolean success = false;
 		System.out.println(credentialsFile);
 		try {
-			InputStream is = new FileInputStream(credentialsFile);
+			InputStream is = isAliceComputer? new FileInputStream(credentialsFile) : SimpleDBHandler.class.getResourceAsStream(credentialsFile);
 			System.out.println(is);
 			db = new AmazonSimpleDBClient(new PropertiesCredentials(is));
 		} catch (IOException e) {

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
-import com.amazonaws.auth.AWSCredentials;
 
 
 
@@ -88,10 +87,8 @@ public abstract class SessionFetcher {
 						  //down timedout servers
 					    for (Integer i : destAddrs)
 					    	vm.addServer(new SimpleServer(i,SimpleServer.status_state.DOWN));
-					    
 					  } catch(IOException ioe) {
 						  ioe.printStackTrace();
-					    
 					  }
 				//if response
 				if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == FOUND_SESSION))
@@ -104,10 +101,8 @@ public abstract class SessionFetcher {
 			} catch (SocketException e1) {
 				e1.printStackTrace();
 			} catch(IOException ioe) {
-			    ioe.printStackTrace(); 
-			    
+			    ioe.printStackTrace();
 			}
-
 			return sessionFetched;
 	}
 	/**
@@ -135,14 +130,12 @@ public abstract class SessionFetcher {
 		List<InetAddress> tryThisRound = new ArrayList<InetAddress>();
 		//what weve stored in
 		List<InetAddress> stored = new ArrayList<InetAddress>();
-		
 		//determine how many servers to check at once
 		int numServersToTryPerRound =  (int) ((SessionHandler.K - stored.size())* FACTOR_TO_CHECK + .999);
 		for (int i = 0; i < destAddrs.size(); i++){
 			//try if up
 			if (destAddrs.get(i).intValue() != vm.localAddress && vm.getStatus(destAddrs.get(i)) == SimpleServer.status_state.UP ){
 				tryThisRound.add(SimpleServer.intToInet(destAddrs.get(i)));
-				System.out.println("added server");
 			}
 		}
 		
@@ -190,7 +183,6 @@ public abstract class SessionFetcher {
 					    	  if (operationPerformed == NEWER_VERSION_IN_TABLE || operationPerformed == STORED_SESSION){
 					    		  stored.add(recievedIP);
 					    	  }
-					    	  //TODO remove
 					    	  System.out.println("Operation completed: " + operationPerformed);
 					      }
 					    } while( stored.size() < SessionHandler.K && tryThisRound.size() > 0); 
@@ -199,26 +191,19 @@ public abstract class SessionFetcher {
 					    	vm.addServer(new SimpleServer(failure, new Date().getTime(), SimpleServer.status_state.DOWN));
 					  } catch(IOException ioe) {
 						  	ioe.printStackTrace();
-					    
 					  }
 			} while (stored.size() < SessionHandler.K && servers.hasMoreElements());
-
 			rpcSocket.close();
-	
-				
 		} catch (SocketException e1) {
 			e1.printStackTrace();
 		} catch(IOException ioe) {
 		    ioe.printStackTrace(); 
-		    
 		}
-
 	//convert stored to ints	
 	ArrayList<Integer> storedInSrvId = new ArrayList<Integer>();
 	for (InetAddress i : stored)
 		storedInSrvId.add(SimpleServer.inetToInt(i));
 	return storedInSrvId;
-	
 	}
 	
 	/**
@@ -226,10 +211,9 @@ public abstract class SessionFetcher {
 	 * @param vm the vm to update with the database vm
 	 */
 	public static void sessionMergerDB(ViewManager vm) {
-		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties", false);
 		if (!dbhandle.dbNotNull())
-			dbhandle = new SimpleDBHandler("C:\\Users\\Alice\\Google Drive\\New folder\\Assignment1A\\AwsCredentials.properties");
-		
+			dbhandle = new SimpleDBHandler("C:\\Users\\Alice\\Google Drive\\New folder\\Assignment1A\\AwsCredentials.properties", true);
 		dbhandle.createDomain(DB_DOMAIN);
 		ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
 		vm.merge(dbvm);
@@ -260,7 +244,6 @@ public abstract class SessionFetcher {
 		if (s == null){
 			return;
 		}
-		
 		int callID = SessionHandler.generateCallID();
 		ByteBuffer request = ByteBuffer.allocate(MAX_BYTES_FOR_UDP);
 		request.putInt(CALL_ID_OFFSET, callID);
@@ -296,7 +279,6 @@ public abstract class SessionFetcher {
 			if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == MERGE_VIEW_RESPONSE)){
 				int merged = vm.merge(ByteBuffer.wrap(recvPkt.getData()));
 				System.out.println("Sessions merged: " + merged);
-				Thread.dumpStack();
 			}
 			rpcSocket.close();
 		} catch (SocketException e1) {
@@ -305,10 +287,6 @@ public abstract class SessionFetcher {
 		    // other error 
 			ioe.printStackTrace();
 		}
-		
-
-		
-
 	}
 			
 			

@@ -123,7 +123,7 @@ public class SessionHandler extends HttpServlet {
 			        			}
 			        		}
 			        		
-			        		if (isLocal && false){ //if found locally
+			        		if (isLocal){ //if found locally
 			        			//System.out.println("looking in local table for cookies");
 			        			session = sessions.get(cSessionID);
 			        			//System.out.println("I found this in local table: " + session);

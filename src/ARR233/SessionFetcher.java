@@ -64,9 +64,11 @@ public abstract class SessionFetcher {
 				rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
 				//try all dest addresses
 				for(Integer destAddr : destAddrs ) {
+					if (destAddr.intValue() == vm.localAddress){
 						InetAddress destAddrInet = SimpleServer.intToInet(destAddr);
 					    DatagramPacket sendPkt = new DatagramPacket(requestMessage, requestMessage.length, destAddrInet, portProj1bRPC);
 					    rpcSocket.send(sendPkt);
+					}
 				}
 				//collect response
 				byte [] inBuf = new byte[512];
@@ -88,7 +90,7 @@ public abstract class SessionFetcher {
 					    	vm.addServer(new SimpleServer(i,SimpleServer.status_state.DOWN));
 					    
 					  } catch(IOException ioe) {
-					    // other error 
+						  ioe.printStackTrace();
 					    
 					  }
 				//if response
@@ -102,7 +104,7 @@ public abstract class SessionFetcher {
 			} catch (SocketException e1) {
 				e1.printStackTrace();
 			} catch(IOException ioe) {
-			    // other error 
+			    ioe.printStackTrace(); 
 			    
 			}
 
@@ -138,7 +140,7 @@ public abstract class SessionFetcher {
 		int numServersToTryPerRound =  (int) ((SessionHandler.K - stored.size())* FACTOR_TO_CHECK + .999);
 		for (int i = 0; i < destAddrs.size(); i++){
 			//try if up
-			if (vm.getStatus(destAddrs.get(i)) == SimpleServer.status_state.UP ){
+			if (destAddrs.get(i).intValue() != vm.localAddress && vm.getStatus(destAddrs.get(i)) == SimpleServer.status_state.UP ){
 				tryThisRound.add(SimpleServer.intToInet(destAddrs.get(i)));
 				System.out.println("added server");
 			}
@@ -158,7 +160,7 @@ public abstract class SessionFetcher {
 					
 					SimpleServer nextServer = servers.nextElement();
 					InetAddress nextInetAddress = nextServer.serverAddress();
-					if (nextServer.status == SimpleServer.status_state.UP && destAddrs.contains(SimpleServer.inetToInt(nextInetAddress)))
+					if (nextServer.serverID != vm.localAddress && nextServer.status == SimpleServer.status_state.UP && destAddrs.contains(SimpleServer.inetToInt(nextInetAddress)))
 						tryThisRound.add(nextInetAddress);
 				}
 				//send packets
@@ -205,7 +207,6 @@ public abstract class SessionFetcher {
 	
 				
 		} catch (SocketException e1) {
-			
 			e1.printStackTrace();
 		} catch(IOException ioe) {
 		    ioe.printStackTrace(); 
@@ -247,8 +248,10 @@ public abstract class SessionFetcher {
 	 */
 	public static void sessionMerger(ViewManager vm, SimpleServer s){
 		// If null is passed in, we find one or just return, else if s is a real server we try to gossip with it
-		while ((s == null || s.status == SimpleServer.status_state.DOWN) && vm.hasUpServers()){ 
-			
+		while ((s == null || 
+				s.status == SimpleServer.status_state.DOWN || 
+				vm.localAddress == s.serverID) 
+				&& vm.hasUpServers()){ 
 			s = vm.getAServer();
 		}
 		if (s == null){
@@ -280,27 +283,24 @@ public abstract class SessionFetcher {
 				      
 				    } while(ByteBuffer.wrap(recvPkt.getData()).getInt(CALL_ID_OFFSET) != callID);
 			  } catch(SocketTimeoutException store) {
+				System.out.println("Server timeout: " + s);
 			    vm.addServer(new SimpleServer(s.serverID, SimpleServer.status_state.DOWN));
 			    
 			  } catch(IOException ioe) {
-			    // other error 
 			    ioe.printStackTrace();
 			  }
 			
 			if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == MERGE_VIEW_RESPONSE)){
 				int merged = vm.merge(ByteBuffer.wrap(recvPkt.getData()));
 				System.out.println("Sessions merged: " + merged);
-				System.out.println(vm);
 				Thread.dumpStack();
 			}
 			rpcSocket.close();
 		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch(IOException ioe) {
 		    // other error 
 			ioe.printStackTrace();
-		    
 		}
 		
 

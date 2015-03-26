@@ -55,7 +55,7 @@ public abstract class SessionFetcher {
 			request.put(OPERATION_OFFSET, READ);
 			request.putLong(MESSAGE_OFFSET, sessionID); //session id is the message
 			byte[] requestMessage = request.array();
-			
+
 			DatagramSocket rpcSocket;				
 			SimpleEntry sessionFetched = null;
 			try {
@@ -63,7 +63,7 @@ public abstract class SessionFetcher {
 				rpcSocket.setSoTimeout(DATAGRAM_TIMEOUT);
 				//try all dest addresses
 				for(Integer destAddr : destAddrs ) {
-					if (destAddr.intValue() == vm.localAddress){
+					if (destAddr.intValue() != vm.localAddress){
 						InetAddress destAddrInet = SimpleServer.intToInet(destAddr);
 					    DatagramPacket sendPkt = new DatagramPacket(requestMessage, requestMessage.length, destAddrInet, portProj1bRPC);
 					    rpcSocket.send(sendPkt);

@@ -123,13 +123,13 @@ public class SessionHandler extends HttpServlet {
 			        			}
 			        		}
 			        		
-			        		if (isLocal){ //if found locally
+			        		if (isLocal && false){ //if found locally
 			        			//System.out.println("looking in local table for cookies");
 			        			session = sessions.get(cSessionID);
 			        			//System.out.println("I found this in local table: " + session);
 			        		}
 			        		if (session == null && srvs.size() > 0){
-			        			//System.out.println("checking remote servers");
+			        			System.out.println("checking remote servers");
 			        			session = SessionFetcher.fetchSession(generateCallID(), cSessionID, srvs, vm);
 			        		} 
 			        		if (session == null) {

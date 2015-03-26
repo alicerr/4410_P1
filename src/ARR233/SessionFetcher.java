@@ -204,8 +204,10 @@ public abstract class SessionFetcher {
  					  } catch(SocketTimeoutException store) {
  					    for (InetAddress failure : tryThisRound) {
  					    	vm.addServer(new SimpleServer(failure, new Date().getTime(), SimpleServer.status_state.DOWN));
- 					    	tryThisRound.remove(failure);
+
+ 	 						System.out.println("Server timeout:" + failure.getHostName());
  					    }
+ 					   tryThisRound = new ArrayList<InetAddress>();
  					  } catch(IOException ioe) {
  						  	ioe.printStackTrace();
  						  	tryThisRound = new ArrayList<InetAddress>();

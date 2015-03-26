@@ -2,8 +2,12 @@ package ARR233;
 
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +59,9 @@ public class SessionTableHandler implements ServletContextListener {
 			InetAddress IP;
 			SimpleDBHandler dbhandle;
 			try {
-				IP = InetAddress.getLocalHost();
+				//IP = InetAddress.getLocalHost();
+				String ipString = getIpAddress();
+				IP = InetAddress.getByName(ipString);
 				vm = new ViewManager(SimpleServer.inetToInt(IP));
 				//TODO get amavon IP
 				
@@ -67,6 +73,8 @@ public class SessionTableHandler implements ServletContextListener {
 			} catch (UnknownHostException e2) {
 				// TODO Auto-generated catch block
 				e2.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			
 			
@@ -110,6 +118,12 @@ public class SessionTableHandler implements ServletContextListener {
 			 keepListenerAlive[0] = false;
 			 	
 			 
+		}
+		
+		public static String getIpAddress() throws MalformedURLException, IOException {
+			URL myIP = new URL("http://myip.dnsomatic.com/");
+			BufferedReader in = new BufferedReader(new InputStreamReader(myIP.openStream()));
+			return in.readLine();
 		}
 		
 		

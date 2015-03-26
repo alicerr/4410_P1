@@ -221,9 +221,15 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	 * @return JSON Cookie of this session, including Session ID in base 36, Version number in base 36 and MetaData in its value
 	 */
 	public Cookie getAsCookie(ArrayList<Integer> srvs){
-		
+		ArrayList<Integer> srvWithNulls = new ArrayList<Integer>();
+		for (Integer i : srvs){
+			srvWithNulls.add(i);
+		}
+		while(srvWithNulls.size() < SessionHandler.K + 1){
+			srvWithNulls.add(SimpleServer.NULL_SERVER_VALUE);
+		}
 		String s = "{ SRVS: "+ "[";
-		for (Integer srv: srvs){
+		for (Integer srv: srvWithNulls){
 			s += srv + ", ";
 		}
 		s = (s.lastIndexOf(',') > 0 ? s.substring(0,s.lastIndexOf(',')) : s)+ "], SID: " + sid + ", VN: " + vn + " }";

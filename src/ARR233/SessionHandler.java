@@ -111,10 +111,10 @@ public class SessionHandler extends HttpServlet {
 			        		for (JsonElement js : srvsJA){	
 			        			int serverID = js.getAsInt();
 			        			
-			        			if (serverID != vm.localAddress){
+			        			if (serverID != vm.localAddress && serverID != SimpleServer.NULL_SERVER_VALUE){
 			        				srvs.add(js.getAsInt());
 			        				vm.addServer(new SimpleServer(js.getAsInt()));
-			        			} else {
+			        			} else if (serverID == vm.localAddress){
 			        				isLocal = true;
 			        			}
 			        		}

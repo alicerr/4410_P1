@@ -10,6 +10,10 @@ import java.util.Date;
 import java.util.Locale;
 
 public class SimpleServer implements Comparable<SimpleServer>{
+	/**
+	 * the value that represents null servers
+	 */
+	public static final int NULL_SERVER_VALUE = 0;
 	public final int serverID;
 	public enum status_state { UP, DOWN };
 	public final long time_observed;

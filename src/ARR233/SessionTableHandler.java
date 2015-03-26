@@ -24,7 +24,7 @@ import javax.servlet.annotation.WebListener;
 @WebListener
 public class SessionTableHandler implements ServletContextListener {
 	
-
+		
 	    /**
 	     * the thread pool to remove old sessions
 	     */

@@ -171,6 +171,7 @@ public class SessionHandler extends HttpServlet {
 			        if (session == null){
 			        	session = new SimpleEntry(generateSessionID(vm.localAddress));
 			        	sessions.put(session);
+			        	srvs = SessionFetcher.writeSession(session, srvs, generateCallID(), vm);
 			        	srvs.add(vm.localAddress);
 			        	sesStateMsg = sesStateMsg == null ? "New Session Started" : sesStateMsg + "; New Session Started";
 			        }

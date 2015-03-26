@@ -123,6 +123,8 @@ public abstract class SessionFetcher {
 	 * 
 	 */
 	public static ArrayList<Integer> writeSession(SimpleEntry session, ArrayList<Integer> destAddrs, int callID, ViewManager vm) {
+		if (!vm.hasUpServers()) return new ArrayList<Integer>();
+		if (destAddrs == null) destAddrs = new ArrayList<Integer>();
 		ByteBuffer request = ByteBuffer.allocate(MAX_BYTES_FOR_UDP);
 		request.putInt(CALL_ID_OFFSET, callID);
 		request.put(OPERATION_OFFSET, WRITE);
@@ -175,7 +177,7 @@ public abstract class SessionFetcher {
  				for( InetAddress destAddr : tryThisRound ) {
  					    DatagramPacket sendPkt = new DatagramPacket(requestMessage, requestMessage.length, destAddr, portProj1bRPC);
  					    rpcSocket.send(sendPkt);
- 					    System.out.println("sent packet");
+ 					    System.out.println("sent packet to " + destAddr.getHostName());
  				}
  				//recieve responses
  				byte [] inBuf = new byte[512];
@@ -204,7 +206,6 @@ public abstract class SessionFetcher {
  					  } catch(SocketTimeoutException store) {
  					    for (InetAddress failure : tryThisRound) {
  					    	vm.addServer(new SimpleServer(failure, new Date().getTime(), SimpleServer.status_state.DOWN));
-
  	 						System.out.println("Server timeout:" + failure.getHostName());
  					    }
  					   tryThisRound = new ArrayList<InetAddress>();
@@ -212,7 +213,7 @@ public abstract class SessionFetcher {
  						  	ioe.printStackTrace();
  						  	tryThisRound = new ArrayList<InetAddress>();
  					  }
- 			} while (stored.size() < SessionHandler.K && servers.hasMoreElements());
+ 			} while (stored.size() < SessionHandler.K && servers.hasMoreElements() && vm.hasUpServers());
  			rpcSocket.close();
  		} catch (SocketException e1) {
  			e1.printStackTrace();

@@ -199,7 +199,7 @@ public class SessionHandler extends HttpServlet {
 			        out.println("    <input type=\"submit\" value=\"Replace Message\" name=\"replace\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Extend Session\" name=\"refresh\" />\n");
 			        out.println("    <input type=\"submit\" value=\"Retire Session\" name=\"retire\" />\n");
-			        out.println(vm.localAddress);
+			 
 			        out.println(FORM_FOOTER);
 			        if (sesStateMsg != null)
 			        	out.println("<p>CURRENT SESSION STATE: "+sesStateMsg+"</p>");
@@ -208,8 +208,11 @@ public class SessionHandler extends HttpServlet {
 			        if (DEBUG) {
 			        	
 			        	out.println("<h2>Debugging Information</h2>");
-			        	out.println("<h4>Current Address: " + vm.localAddress + "</h4>");
-				        out.println(session.htmlFormattedDebugMessage());
+			        	out.println("<h4>Current Address: " + vm.localAddress + " / " + SimpleServer.intToInet(vm.localAddress).getHostName() + "</h4>");
+				        for (Integer srv : srvs){
+				        	out.println("<h5>Stored in: " + srv + " / " + SimpleServer.intToInet(srv).getHostAddress());
+				        }
+			        	out.println(session.htmlFormattedDebugMessage());
 			        	if (cVal != null){
 			        		out.println("<p>Retrieved Cookie Value: " + cVal +"</p>");
 			        	}

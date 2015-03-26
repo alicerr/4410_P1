@@ -43,6 +43,7 @@ public class GossipService extends Thread {
 				// I have a server that is believed to be up Or the last server, which could be down
 				System.out.println("Gossiping with " + theLuckyOne);
 				SessionFetcher.sessionMerger(vm, theLuckyOne);
+				System.out.println(vm);
 			}
 			
 			

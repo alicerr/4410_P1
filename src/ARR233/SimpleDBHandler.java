@@ -1,10 +1,12 @@
 package ARR233;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.simpledb.AmazonSimpleDB;
 import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
@@ -27,14 +29,18 @@ public class SimpleDBHandler {
 	
 	public boolean connectToAccount(String credentialsFile){
 		boolean success = false;
+		System.out.println(credentialsFile);
 		try {
 			InputStream is = SimpleDBHandler.class.getResourceAsStream(credentialsFile);
+			System.out.println(is);
 			db = new AmazonSimpleDBClient(new PropertiesCredentials(is));
 		} catch (IOException e) {
+			e.printStackTrace();
 			success = false;
 			System.out.println("Could not read keys from file");
 		} catch (NullPointerException e) {
 			success = false;
+			e.printStackTrace();
 			System.out.println("Could not find credentials file");
 		}
 		success = true;
@@ -84,7 +90,9 @@ public class SimpleDBHandler {
 	}
 
 	public void createDomain(String domain) {
-		db.createDomain(new CreateDomainRequest(domain));
+		CreateDomainRequest request = new CreateDomainRequest(domain);
+		System.out.println(db);
+		db.createDomain(request);
 	}
 	
 	public void deleteDomain(String domain) {

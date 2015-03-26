@@ -225,7 +225,7 @@ public abstract class SessionFetcher {
 	 * @param vm the vm to update with the database vm
 	 */
 	public static void sessionMergerDB(ViewManager vm) {
-		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties");
+		SimpleDBHandler dbhandle = new SimpleDBHandler("\\C:\\Users\\Alice\\Google Drive\\New folder\\Assignment1A\\AwsCredentials.properties");
 		dbhandle.createDomain(DB_DOMAIN);
 		ViewManager dbvm = dbhandle.getDBViews(DB_DOMAIN);
 		vm.merge(dbvm);
@@ -290,6 +290,8 @@ public abstract class SessionFetcher {
 			if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == MERGE_VIEW_RESPONSE)){
 				int merged = vm.merge(ByteBuffer.wrap(recvPkt.getData()));
 				System.out.println("Sessions merged: " + merged);
+				System.out.println(vm);
+				Thread.dumpStack();
 			}
 			rpcSocket.close();
 		} catch (SocketException e1) {

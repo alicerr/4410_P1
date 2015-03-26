@@ -7,7 +7,6 @@ import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
 public class ViewManager  implements Runnable {
 
 	private ConcurrentHashMap<Integer, SimpleServer> servers = new ConcurrentHashMap<Integer, SimpleServer>();
@@ -149,6 +148,14 @@ public class ViewManager  implements Runnable {
 		serverList.add(i); //move i to tail
 		return servers.get(i);
 		
+	}
+	
+	public String toString(){
+		String s = "Size: " + size +", Active size: " + runningServers + "\n";
+		Enumeration<SimpleServer> e = getServers();
+		while (e.hasMoreElements())
+			s += e.toString() + "\n";
+		return s;
 	}
 	
 

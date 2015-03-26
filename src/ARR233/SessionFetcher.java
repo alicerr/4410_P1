@@ -168,7 +168,7 @@ public abstract class SessionFetcher {
  					
  					SimpleServer nextServer = servers.nextElement();
  					InetAddress nextInetAddress = nextServer.serverAddress();
- 					if (nextServer.serverID != vm.localAddress && nextServer.status == SimpleServer.status_state.UP && destAddrs.contains(SimpleServer.inetToInt(nextInetAddress)))
+ 					if (nextServer.serverID != vm.localAddress && nextServer.status == SimpleServer.status_state.UP && !destAddrs.contains(SimpleServer.inetToInt(nextInetAddress)))
  						tryThisRound.add(nextInetAddress);
  				}
  				//send packets

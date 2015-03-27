@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-build/
-=======
 /build/
->>>>>>> 89e460a7a261ad9cd0d6ea79fa56de014f98b9c1
 
 #Eclipse project files
 .project
@@ -12,5 +8,10 @@ build/
 
 #AWS keys
 AwsCredentials.properties
-=======
->>>>>>> 89e460a7a261ad9cd0d6ea79fa56de014f98b9c1
+
+#Other
+.war
+.zip
+.log
+.aux
+

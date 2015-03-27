@@ -15,13 +15,15 @@ import java.util.List;
 
 
 /**
- * Handles UDP packet requests, recieving genrated responses, updating the view with these
+ * Handles generating all UDP packet requests, recieving generated responses, updating the view with these.
+ * UDP requests: READ WRITE MERGR_VIEWS
+ * UDP responses: FOUND_SESSION, STORED_SESSION, MERGE_VIEW_RESPONSE, SESSION_NOT_FOUND, NEWER_VERSION_IN_TABLE
  * @author Alice/Spencer
  *
  */
 public abstract class SessionFetcher {
 	/**
-	 * Operation codes for the 
+	 * Operation codes and response codes for UDP packages
 	 */
 	public static final byte READ = 0, 
 							 WRITE = 1, 
@@ -44,8 +46,14 @@ public abstract class SessionFetcher {
 	 * Given a need for X write responses we send out FACTOR TO CHECK * X requests, rounded up
 	 */
 	public static final float FACTOR_TO_CHECK = 1.5f;
+	/**
+	 * Time to wait for a datagram response
+	 */
 	public static final short DATAGRAM_TIMEOUT = 5000;
-	private static final String DB_DOMAIN = "TESTING";
+	/**
+	 * Name of database table
+	 */
+	private static final String DB_DOMAIN = "PROJ_1B_VIEWS";
 	/**
 	 * Return a session, if found at another server
 	 * @param callID 

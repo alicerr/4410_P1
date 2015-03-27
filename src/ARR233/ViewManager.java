@@ -7,16 +7,29 @@ import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
 import ARR233.SimpleServer.status_state;
-public class ViewManager  {
 
+/**
+ * Manages the view of other servers
+ * @author Alice/Spencer
+ *
+ */
+public class ViewManager  {
+	/**
+	 * The server list
+	 */
 	private ConcurrentHashMap<Integer, SimpleServer> servers = new ConcurrentHashMap<Integer, SimpleServer>();
+	/**
+	 * The IPV4 address as an int for the server this is running on
+	 */
 	public final int localAddress;
 	/**
-	 * If there are no servers up we can probably stop trying
+	 * If there are no servers up we can probably stop trying. Thread safe
 	 */
 	private final AtomicInteger runningServers = new AtomicInteger(0);
+	/**
+	 * Servers contained over all. Thread safe
+	 */
 	private final AtomicInteger size = new AtomicInteger(0);
 	/**
 	 * used to select a 'random' server
@@ -39,7 +52,8 @@ public class ViewManager  {
 		localAddress = 0;
 	}
 	/**
-	 * Add a new server. will ad if not locol, or outdated
+	 * Add a new server. will add if not local and is the newest one seen
+	 * If it is the local address it will update time_observed to the current time
 	 * @param newServer
 	 * @return
 	 */
@@ -91,7 +105,10 @@ public class ViewManager  {
 	public int size() {
 		return size.get();
 	}
-	
+	/**
+	 * Get the number of running servers. Thread safe
+	 * @return
+	 */
 	public int runningServerSize() {
 		return runningServers.get();
 	}
@@ -186,6 +203,10 @@ public class ViewManager  {
 	public boolean hasUpServers() {
 		return runningServers.get() > 1;
 	}
+	/**
+	 * Pick a server from a list of servers kept, and move that server to the end of the list
+	 * @return
+	 */
 	public SimpleServer getAServer(){
 		int i = serverList.remove();
 		serverList.add(i); //move i to tail
@@ -193,7 +214,7 @@ public class ViewManager  {
 		
 	}
 	/**
-	 * 
+	 *Size, active size, and table contents
 	 */
 	public String toString(){
 		String s = "Size: " + size.toString() +", Active size: " + runningServers.toString() + "\n";

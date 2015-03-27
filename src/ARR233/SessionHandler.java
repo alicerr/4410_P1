@@ -22,13 +22,17 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Thread Safe Session Handler for Assignment 1a 5300
+ * Thread Safe Session Handler for Assignment 1a and 1b
  * Servlet implementation class SessionHandler
+ * Handles retrieving data from cookies and generating the spropriate response
  * 
  * Prints out the session, session table view, cookie retrieved, server view, etc in DEBUG = true
  */
 @WebServlet("/SessionHandler")
 public class SessionHandler extends HttpServlet {
+	/**
+	 * Risiliancy to try for
+	 */
 	public static final byte K = 1;
 	/**
 	 * Serial Version UID
@@ -70,7 +74,7 @@ public class SessionHandler extends HttpServlet {
 											  "</body>"
 											+ "</html>";	
 	/**
-	 *  @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 *  get and post response of this session handler
 	 */
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -241,7 +245,7 @@ public class SessionHandler extends HttpServlet {
 		    }
 	/**
 	 * Generates a unique session ID by combining the 4 bytes of the serverID and 
-	 * A 4 byte session ID. Session ID rolls over
+	 * A 4 byte session ID. Session ID rolls over. Thread safe
 	 * @return
 	 */
 	private static long generateSessionID(int localServerId) {
@@ -252,7 +256,7 @@ public class SessionHandler extends HttpServlet {
 		return hold.getLong(0);
 	}
 	/**
-	 * Generate a unique call id. Rollsover
+	 * Generate a unique call id. Rolls over. Thread safe
 	 * @return
 	 */
 	public static int generateCallID() {
@@ -260,7 +264,7 @@ public class SessionHandler extends HttpServlet {
 	}
 
 	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 * Post calls the standard get response
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);

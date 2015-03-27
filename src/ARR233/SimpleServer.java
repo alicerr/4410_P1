@@ -8,11 +8,29 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
+/**
+ * A immutable minimal server class
+ * @author Alice
+ *
+ */
 public class SimpleServer implements Comparable<SimpleServer>{
+	/**
+	 * The sever IP (IP represented as an integer
+	 */
 	public final int serverID;
+	/**
+	 * the state of the server (UP or DOWN)
+	 * @author Alice
+	 *
+	 */
 	public enum status_state { UP, DOWN };
+	/**
+	 * The last time the server was observed
+	 */
 	public final long time_observed;
+	/**
+	 * The status of this server
+	 */
 	public final status_state status;
 	/**
 	 * Init from packet with start index
@@ -107,7 +125,9 @@ public class SimpleServer implements Comparable<SimpleServer>{
 	public static InetAddress intToInet(int address) throws UnknownHostException{
 		return InetAddress.getByAddress(ByteBuffer.allocate(4).putInt(address).array());
 	}
-	@Override
+	/**
+	 * Comparison method based on ID and time last observed
+	 */
 	public int compareTo(SimpleServer o) {
 		int comp = Integer.compare(this.serverID, o.serverID);
 		if (comp == 0)
@@ -116,7 +136,7 @@ public class SimpleServer implements Comparable<SimpleServer>{
 			return comp;
 	}
 	/**
-	 * String
+	 * String <ServerID, status, time observed in Date format>
 	 */
 	public String toString(){
 		return "<" + serverID + "," + (isUp() ? "Up" : "Down" ) + "," + new Date(time_observed).toString() + ">"; 

@@ -2,15 +2,30 @@ package ARR233;
 
 import java.util.Enumeration;
 import java.util.Random;
-
+/**
+ * Gossip protocol service runner for innitiating node
+ * @author Alice/Spencer
+ *
+ */
 public class GossipService extends Thread {
+	/**
+	 * Milliseconds to wait between gossip rounds. Artificially high here
+	 */
 	public static final int GOSSIP_SECS = 30000;
+	/**
+	 * A link to the view manager for the owning server
+	 */
 	private ViewManager vm;
-	
+	/**
+	 * Pass in the owning view manager
+	 * @param vim
+	 */
 	public GossipService(ViewManager vim) {
 		vm = vim;
 	}
-	
+	/**
+	 * Run the thread
+	 */
 	@Override
 	public void run() {
 		Random generator = new Random();

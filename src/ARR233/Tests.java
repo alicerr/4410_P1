@@ -9,7 +9,11 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-
+/**
+ * A testing run for the gossip prrotocol
+ * @author Alice/Spencer
+ *
+ */
 public class Tests extends SessionFetcher{
 	static String domain = "Project1bViews";
 	private static String ipAddr = "";
@@ -31,13 +35,18 @@ public class Tests extends SessionFetcher{
 		//TestGossip(true);
 		
 	}
-
+	/**
+	 * Try to delete a domain
+	 */
 	private static void TestDeleteDomain() {
 		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties",false);
 		dbhandle.deleteDomain(domain);
 		System.out.println("Deleted domain");
 	}
-
+	/**
+	 * Setup the DB
+	 * @return the handler for the DB
+	 */
 	private static SimpleDBHandler setUpDBandDomain() {
 		SimpleDBHandler dbhandle = new SimpleDBHandler("AwsCredentials.properties",false);
 		dbhandle.createDomain(domain);
@@ -50,7 +59,9 @@ public class Tests extends SessionFetcher{
 		
 		return dbhandle;
 	}
-	
+	/**
+	 * Print out the contents of the DB
+	 */
 	private static void WhatIsInTheDB() {
 		SimpleDBHandler dbhandle = setUpDBandDomain();
 		
@@ -59,7 +70,11 @@ public class Tests extends SessionFetcher{
 		printVM(vm);
 		
 	}
-	
+	/**
+	 * Create some server objects to test with
+	 * @return
+	 * @throws UnknownHostException
+	 */
 	private static List<SimpleServer> createTestServerObjects() throws UnknownHostException {
 		List<SimpleServer> servers = new ArrayList<SimpleServer>();
 		servers.add(new SimpleServer(InetAddress.getByName("cornell.edu")));
@@ -67,7 +82,10 @@ public class Tests extends SessionFetcher{
 		servers.add(new SimpleServer(InetAddress.getByName("google.com")));
 		return servers;
 	}
-
+	/**
+	 * tests the number of servers in the DB
+	 * @throws UnknownHostException
+	 */
 	private static void TestSimpleDBHandler() throws UnknownHostException {
 		System.out.println("Testing DBHandler...");
 		SimpleDBHandler dbhandle = setUpDBandDomain();
@@ -83,7 +101,10 @@ public class Tests extends SessionFetcher{
 		System.out.println("Number of Servers: " + numServers);
 		printVM(vm);
 	}
-	
+	/**
+	 * Test a merge of two DBs
+	 * @throws UnknownHostException
+	 */
 	private static void TestMergeDB() throws UnknownHostException {
 		System.out.println("Testing MergeDB...");
 		SimpleDBHandler dbhandle = setUpDBandDomain();
@@ -110,14 +131,21 @@ public class Tests extends SessionFetcher{
 		System.out.println("Servers on simpleDB post-merge: " + numServers);
 		printVM(dbvm);
 	}
-	
+	/**
+	 * Print a view manager to console
+	 * @param vm
+	 */
 	private static void printVM(ViewManager vm) {
 		Enumeration<SimpleServer> serverEnum = vm.getServers();
 		while(serverEnum.hasMoreElements()) {
 			System.out.println((SimpleServer)serverEnum.nextElement());
 		}
 	}
-	
+	/**
+	 * Test the gossip protocol
+	 * @param running
+	 * @throws IOException
+	 */
 	private static void TestGossip(boolean running) throws IOException {
 		System.out.println("Testing gossip with running server set to: " + running);
 		SessionTable st = new SessionTable();
@@ -150,7 +178,11 @@ public class Tests extends SessionFetcher{
 		System.out.println("========================================================\n"
 				+ "PLEASE STOP THIS PROCESS.... THREAD IS NOT KILLING ITSELF");
 	}
-	
+	/**
+	 * Get the remote IP of a server this is running on 
+	 * @return
+	 * @throws Exception
+	 */
 	private static String getMyIP() throws Exception {
 		URL myIP = new URL("http://myip.dnsomatic.com/");
 		BufferedReader in = new BufferedReader(new InputStreamReader(myIP.openStream()));

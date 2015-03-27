@@ -19,13 +19,28 @@ import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
 import com.amazonaws.services.simpledb.model.ReplaceableItem;
 import com.amazonaws.services.simpledb.model.SelectRequest;
-
+/**
+ * A class for connecting to Amazon DB
+ * @author Alice/Spencer
+ *
+ */
 public class SimpleDBHandler {
+	/**
+	 * The DB connected to
+	 */
 	private AmazonSimpleDB db;
-	
+	/**
+	 * Initialization and connection to the database
+	 * @param credentialsFile the name of the credintials file in src
+	 * @param isAliceComputer is this Alice's computer? Her credentials are somewhere else
+	 */
 	public SimpleDBHandler(String credentialsFile, boolean isAliceComputer) {
 		this.connectToAccount(credentialsFile, isAliceComputer);
 	}
+	/**
+	 * Is the db initialized or did it fail?
+	 * @return 
+	 */
 	public boolean dbNotNull(){ return db != null; }
 	public boolean connectToAccount(String credentialsFile, boolean isAliceComputer){
 		boolean success = false;
@@ -46,19 +61,30 @@ public class SimpleDBHandler {
 		
 		return success;
 	}
-	
+	/**
+	 * Is  a domain in here
+	 * @param domain
+	 * @return
+	 */
 	public boolean domainExists(String domain) {
 		List<String> domains = db.listDomains().getDomainNames();
 		return domains.contains(domain);
 	}
-	
+	/**
+	 * Create the domain if it doesn't exist
+	 * @param domain
+	 */
 	public void domainExistsOrCreate(String domain) {
 		if(!domainExists(domain)) {
 			createDomain(domain);
 			System.out.println("New SimpleDB Domain Created");
 		}
 	}
-
+	/**
+	 * read in the entire view table for bootstraping & merging sub method
+	 * @param domain
+	 * @return
+	 */
 	private List<SimpleServer> getAllViewData(String domain) {
 		List<SimpleServer> serverList = new ArrayList<SimpleServer>();
 		String selectExpression = "select * from " + domain;
@@ -70,7 +96,11 @@ public class SimpleDBHandler {
 		}
 		return serverList;
 	}
-	
+	/**
+	 * read in the entire view table for bootstraping & merging
+	 * @param domain
+	 * @return a bootstraped view manager
+	 */
 	public ViewManager getDBViews(String domain) {
 		List<SimpleServer> servers = this.getAllViewData(domain);
 		ViewManager vm = new ViewManager();
@@ -79,7 +109,11 @@ public class SimpleDBHandler {
 		}
 		return vm;
 	}
-	
+	/**
+	 * Add a server to the DB views
+	 * @param domain the domain of the server
+	 * @param ss a SimpleServer representing the server
+	 */
 	public void addServerToDBViews(String domain, SimpleServer ss) {
 		List<ReplaceableAttribute> data = new ArrayList<ReplaceableAttribute>();
 		data.add(new ReplaceableAttribute().withName("ServerView").withValue(ss.toString()).withReplace(true));
@@ -87,17 +121,26 @@ public class SimpleDBHandler {
 		db.putAttributes(new PutAttributesRequest().withDomainName(domain).withItemName(Integer.toString(ss.serverID)).withAttributes(data));
 		
 	}
-
+	/**
+	 * Create the table
+	 * @param domain
+	 */
 	public void createDomain(String domain) {
 		CreateDomainRequest request = new CreateDomainRequest(domain);
-		//System.out.println(db);
 		db.createDomain(request);
 	}
-	
+	/**
+	 * Remove the table
+	 * @param domain
+	 */
 	public void deleteDomain(String domain) {
 		db.deleteDomain(new DeleteDomainRequest(domain));
 	}
-
+	/**
+	 * Update the DB with this viewmanager's view
+	 * @param domain
+	 * @param vm
+	 */
 	public void updateDBViews(String domain, ViewManager vm) {
 		List<ReplaceableItem> data = new ArrayList<ReplaceableItem>();
 		Enumeration<SimpleServer> serverEnum = vm.getServers();

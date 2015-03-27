@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.servlet.http.Cookie;
+
 /**
- * @author Alice
  *Immutable simple entry class
  *Assumed to be unique by: Session, Version
+ * @author Alice/Spencer
+ *
  */
 public final class SimpleEntry implements Comparable<SimpleEntry>{
 	/**
@@ -178,8 +180,8 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
     		return "Session Active";
     	}
     }
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
+    /**
+     * print this session with only a little of it's message
      */
     public String toString(){
 
@@ -194,8 +196,8 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
     	String minimsg = msg.length() > 10 ? msg.substring(0, 10): msg;
     	return "<p>" + "SID: " + sid + ", VN: " + vn + ", EXP: " + new Date(exp) + " MSG: " + minimsg + "</p>";
     }
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
+    /**
+     * Equals method for simple entry
      */
     public boolean equals(Object object){
     	if (object == null || !(object instanceof SimpleEntry)){
@@ -204,8 +206,8 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
     		return compareTo((SimpleEntry)object) == 0;
     	}
     }
-	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	/**
+	 * Compare method for simple entry (only considers SID and version, not exp or message
 	 */
 	public int compareTo(SimpleEntry simpleEntry) {
 		int sid_cmp = Long.compare(sid, simpleEntry.sid);
@@ -228,9 +230,6 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		}
 		s = (s.lastIndexOf(',') > 0 ? s.substring(0,s.lastIndexOf(',')) : s)+ "], SID: " + sid + ", VN: " + vn + " }";
 		
-		
-		
-		//System.out.println(s);
 		Cookie cookie = new Cookie(COOKIE_NAME, s);
 		int expiry = (int) ((exp - System.currentTimeMillis() + 999)/1000);
 		
@@ -244,7 +243,7 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 	
 
 	/**
-	 * TODO not perserving message
+	 * Fill a buffer for a UDP packet with the session information
 	 * @param buffer
 	 */
 	public void fillBufferForUDP(ByteBuffer buffer){
@@ -260,11 +259,10 @@ public final class SimpleEntry implements Comparable<SimpleEntry>{
 		}
 	}
 	/**
-	 * TODO is valid ascii?
-	 * @param c
+	 *  is valid text? Allows values up to 255
+	 * @param c the charecter to check
 	 * @return
 	 */
-	
 	public boolean inRange(char c){
 		return (int)c >= 1 && (int)c <= 255;
 	}

@@ -6,8 +6,6 @@
 \newcommand{\workingDate}{\textsc{2015 $|$ March $|$ 26}}
 \newcommand{\userName}{Alice Renegar \& Spencer Steel}
 \newcommand{\institution}{Assignment 1}
-\usepackage{rrr}
-\usepackage{amssymb}
 % To add your univeristy logo to the upper right, simply
 % upload a file named "logo.png" using the files menu above.
 \title{Project 1b: Scalable and Available Website}
@@ -58,6 +56,8 @@ Sessions are guaranteed for an hour, which is sufficient for a 'fake' applicatio
 \bb{Delta:} because sessions received via UDP are not given a new expiration time we need to primarily worry about the \cd{UDP} response time during reads (sent in parallel) in delta. This is anticipated to be 3 seconds maximum, with an additional 50 milliseconds to reach the point of the code where the expiration timeout is checked and for system clock alignment.
 \subsection{Expired Session Collection}
 Garbage collection is done once every 5 minutes, in an effort to test code. If this were in use we would set it to once a day. It is a background task.
+\subsection{Gossip Frequency}
+The gossip protocol is carried like the project specifications discussed. In our code submitted and while testing GOSSIP_SECS is set to 30 seconds. We realize that in a larger system this could be too often causing issues, however for such a small application and for a testing environment we had it set to 30 seconds. 
 \subsection{Debugging Output to Hosted Page}
 Much of this output reduces parallelism by read-locking portions of tables. Set \cd{DEBUG} to false in the session handler to remove this.
 
@@ -70,12 +70,43 @@ TODO: class list \& 1 line overviews here
 \section{AWS Elastic Beanstalk}
 
 \subsection{Setup Procedure}
-To get our application running on AWS Elastic Beanstalk, you simply need to deploy the war file, either via the AWS Management Console or via the Eclipse plugin (There are other ways, however those are the ways we did it). After deploying to Elastic Beanstalk, it is important to make sure that all inbound UDP is allowed in the security group of all the instances running the code. Without this it is impossible for the servers to make RPC calls to eachother. 
-Once running on AWS it you will need to navigate to the [beanstalkgivenURL].elasticbeanstalk.com/SessionHandler
-
+To get our application running on AWS Elastic Beanstalk follow the steps below:
+\begin{enumerate}
+  \item Create and Deploy War file. There are two ways we did this:
+  \begin{itemize}
+     \item Create then deploy VIA AWS Management Console
+     \begin{enumerate}
+     \item Create War file -- [warfile].war via Eclipse or command line
+     \item Log into AWS Elastic Beanstalk and create/configure new environment
+     \item Upload war file to environment.
+     \end{enumerate}
+     \item Deploy to AWS via Eclipse
+     \begin{enumerate}
+     \item From Project to deploy, select AWS -> Deploy to beanstalk
+     \item Select new environment or existing beanstalk environment.
+     \item Eclipse deploys to the environment with incremental update enabled.
+     \end{enumerate}
+   \end{itemize}
+  \item Ensure environment has property security groups to allow all UDP incoming traffic from all IPs. (Without this step, the servers will not be able to merge views or sent session information)
+  \item Once beanstalk is up and running you can view the site at the given beanstalk URL with "/SessionHandler" appended to the end of it. See below
+  \begin{itemize}
+  \item Beanstalk gives url [ProjectSpecificEnv].elasticbeanstalk.com
+  \item URL to view our project: [ProjectSpecificEnv].elasticbeanstalk.com/SessionHandler
+  \end{itemize}
+\end{enumerate}
 \subsection{Testing Resiliency}
-To test resiliency, we set our minimum number of servers to 2 or more and then connecting to the system with different clients. After noting that different client requests were being handled by different servers we terminated a server (via EC2 Management console). After terminating a server we checked that the client sessions who were being handled by the shutdown server were persisted and were able to be picked up by other servers. After running this test several times we are confident that 1-resiliency is working.
-
+Testing resiliency is an important part of this project. We tested for resiliency through the following steps:
+\begin{enumerate}
+\item In beanstalk environment configurations set minimun servers to at least 2
+\item Connect to the environment from several different clients
+\item Verify which specific servers are executing client requests
+\item From AWS EC2 Management Console, right click on specific instance and terminate the instance.
+\item Check clients that were connected to the terminated server and extend their session.
+\item Verify their session was persisted and that the cookie updated to new servers, or the null server if only two instances were running.
+\item After a short time, beanstalk should create a new instance to ensure that the minimum umber of instances are running.
+\item Once the new instance is up and running, clients should be able to connect to it and it should be integrated into the environment.
+\end{enumerate}
+Following the above mentioned steps, we were able to feel confident that our database is 1-resilient.
 \section{Explanations}
 
 \subsection{SimpleDB Races}

@@ -91,6 +91,10 @@ public class ViewManager  {
 	public int size() {
 		return size.get();
 	}
+	
+	public int runningServerSize() {
+		return runningServers.get();
+	}
 	/**
 	 * Server enumeration
 	 * @return

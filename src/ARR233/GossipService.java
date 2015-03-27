@@ -15,10 +15,18 @@ public class GossipService extends Thread {
 	public void run() {
 		Random generator = new Random();
 		
+		// Start with a sleep
+		try {
+			Thread.sleep( (GOSSIP_SECS/2) + generator.nextInt( GOSSIP_SECS));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		while(true) {
 			
 			// pick a random server to gossip with (including the DB)
-			int numServers = vm.size();
+			int numServers = vm.runningServerSize();
+			
 			// numServers + 1 -> 0-(size-1) are servers, size = databaseGossip
 			int serverToGossip = generator.nextInt(numServers+1);
 			
@@ -35,10 +43,12 @@ public class GossipService extends Thread {
 				while(serverEnum.hasMoreElements()) {
 					theLuckyOne = serverEnum.nextElement();
 					// Check that we are at the 'randomly' chosen server AND it is believed to be UP
-					if(i >= serverToGossip && theLuckyOne.status == SimpleServer.status_state.UP && theLuckyOne.serverID != vm.localAddress){
-						break;
+					if(theLuckyOne.status == SimpleServer.status_state.UP){
+						i++;
+						if(i==serverToGossip){
+							break;
+						}
 					}
-					i++;
 				}
 				// I have a server that is believed to be up Or the last server, which could be down
 				System.out.println("Gossiping with " + theLuckyOne);

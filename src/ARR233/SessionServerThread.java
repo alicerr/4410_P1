@@ -94,7 +94,7 @@ public class SessionServerThread extends Thread {
                 } else if (opCode == SessionFetcher.MERGE_VIEWS){
                     //count number of server IDs gained
                 	int i = vm.merge(data);
-                	System.out.println("merged in " + i + " servers from " + packet.getAddress());
+                	System.out.println("Repsonding: merged in " + i + " servers from " + packet.getAddress());
                 	response.put(SessionFetcher.OPERATION_OFFSET, SessionFetcher.MERGE_VIEW_RESPONSE);
                 	//send merged view
                 	vm.getServerSet(response);

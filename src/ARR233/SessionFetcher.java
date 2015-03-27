@@ -45,7 +45,7 @@ public abstract class SessionFetcher {
 	 */
 	public static final float FACTOR_TO_CHECK = 1.5f;
 	public static final short DATAGRAM_TIMEOUT = 5000;
-	private static final String DB_DOMAIN = "Project1bViews";
+	private static final String DB_DOMAIN = "TESTING";
 	/**
 	 * Return a session, if found at another server
 	 * @param callID 
@@ -135,7 +135,7 @@ public abstract class SessionFetcher {
 	 * 
 	 */
 	public static ArrayList<Integer> writeSession(SimpleEntry session, ArrayList<Integer> destAddrs, int callID, ViewManager vm) {
-		if (!vm.hasUpServers()) return new ArrayList<Integer>();
+		//if (!vm.hasUpServers()) return new ArrayList<Integer>();
 		ByteBuffer request = ByteBuffer.allocate(MAX_BYTES_FOR_UDP);
 		request.putInt(CALL_ID_OFFSET, callID);
 		request.put(OPERATION_OFFSET, WRITE);
@@ -216,10 +216,12 @@ public abstract class SessionFetcher {
 							      }
 							    } while( stored.size() < SessionHandler.K && tryThisRound.size() > 0); 
 							  } catch(SocketTimeoutException store) {
-								  System.out.println("Timed out connection: SessionFetcher:WriteSession");
+								
 								  timeoutCount++;
-							    for (InetAddress failure : tryThisRound) 
+							    for (InetAddress failure : tryThisRound) {
 							    	vm.addServer(new SimpleServer(failure, new Date().getTime(), SimpleServer.status_state.DOWN));
+							    	System.out.println("Timed out connection: SessionFetcher:WriteSession: " + failure.getHostAddress());
+							    }
 							  } catch(IOException ioe) {
 								  	ioe.printStackTrace();
 								  	if (!firstIOE) firstIOE = true;
@@ -271,7 +273,7 @@ public abstract class SessionFetcher {
 	 * @param s server to gossip with
 	 */
 	public static void sessionMerger(ViewManager vm, SimpleServer s){
-		if (!vm.hasUpServers()) return;
+		//if (!vm.hasUpServers()) return;
 		// If null is passed in, we find one or just return, else if s is a real server we try to gossip with it
 		while ((s == null || 
 				s.status == SimpleServer.status_state.DOWN || 
@@ -310,7 +312,7 @@ public abstract class SessionFetcher {
 					      
 					    } while(ByteBuffer.wrap(recvPkt.getData()).getInt(CALL_ID_OFFSET) != callID);
 				  } catch(SocketTimeoutException store) {
-					System.out.println("Server timeout: " + s);
+					System.out.println("Server timeout (merge): " + s);
 				    vm.addServer(new SimpleServer(s.serverID, SimpleServer.status_state.DOWN));
 				    
 				  } catch(IOException ioe) {
@@ -319,7 +321,7 @@ public abstract class SessionFetcher {
 				
 				if (recvPkt != null && (recvPkt.getData()[OPERATION_OFFSET] == MERGE_VIEW_RESPONSE)){
 					int merged = vm.merge(ByteBuffer.wrap(recvPkt.getData()));
-					System.out.println("Sessions merged: " + merged);
+					System.out.println("Initiator: merged in " + merged + " servers from " + recvPkt.getAddress());
 				}
 				rpcSocket.close();
 			} catch (SocketException e1) {

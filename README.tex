@@ -70,12 +70,15 @@ TODO: class list \& 1 line overviews here
 \section{AWS Elastic Beanstalk}
 
 \subsection{Setup Procedure}
+To get our application running on AWS Elastic Beanstalk, you simply need to deploy the war file, either via the AWS Management Console or via the Eclipse plugin (There are other ways, however those are the ways we did it). After deploying to Elastic Beanstalk, it is important to make sure that all inbound UDP is allowed in the security group of all the instances running the code. Without this it is impossible for the servers to make RPC calls to eachother. 
+Once running on AWS it you will need to navigate to the [beanstalkgivenURL].elasticbeanstalk.com/SessionHandler
 
 \subsection{Testing Resiliency}
+To test resiliency, we set our minimum number of servers to 2 or more and then connecting to the system with different clients. After noting that different client requests were being handled by different servers we terminated a server (via EC2 Management console). After terminating a server we checked that the client sessions who were being handled by the shutdown server were persisted and were able to be picked up by other servers. After running this test several times we are confident that 1-resiliency is working.
 
 \section{Explanations}
 
 \subsection{SimpleDB Races}
-
+We chose to allow races to happen and not retry gossip exchanges with the database. With the gossip protocol we set up, overwrites can happen, but the overwritten data will still be in the server. This data will be passed around to other servers and eventually will be placed in the database.
 
 \end{document}

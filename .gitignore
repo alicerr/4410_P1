@@ -15,3 +15,9 @@ AwsCredentials.properties
 .log
 .aux
 
+*.aux
+README.dvi
+*.log
+README.synctex.gz
+README.tex
+*.tex
